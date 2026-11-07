@@ -1,0 +1,26 @@
+# Files excluded from the release zip.
+
+/.git
+/.github
+/.pi
+/.wordpress-org
+/bin
+/composer.json
+/composer.lock
+/dist
+/node_modules
+/phpcs.xml.dist
+/phpunit.xml.dist
+/tests
+/vendor
+/wp-env
+/.wp-env.json
+/.distignore
+/.editorconfig
+/.eslintrc.json
+/.gitignore
+/openspec
+/package-lock.json
+*.map
+*.log
+.DS_Store

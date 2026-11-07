@@ -1,0 +1,90 @@
+/* Findable admin styles. Logical properties keep RTL working without a separate file. */
+
+.findable-score {
+	display: inline-block;
+	font-weight: 600;
+	padding: 0 6px;
+	border-radius: 3px;
+	white-space: nowrap;
+}
+
+.findable-band-good {
+	background: #e6f2e6;
+	color: #1a5c1a;
+}
+
+.findable-band-needs-work {
+	background: #fdf3e0;
+	color: #7a5410;
+}
+
+.findable-band-poor {
+	background: #fbeaea;
+	color: #8a2424;
+}
+
+.findable-family {
+	display: inline-block;
+	margin-inline-end: 8px;
+}
+
+.findable-stale {
+	font-style: italic;
+	opacity: 0.8;
+}
+
+.findable-checks {
+	list-style: disc;
+	margin-inline-start: 18px;
+}
+
+.findable-failing li {
+	margin-bottom: 6px;
+}
+
+.findable-advice {
+	font-size: 12px;
+	opacity: 0.9;
+}
+
+.findable-warning {
+	color: #8a5b00;
+}
+
+.findable-error {
+	color: #8a2424;
+}
+
+.findable-bands td {
+	position: relative;
+	padding-inline-start: 8px;
+}
+
+.findable-band-bar {
+	display: inline-block;
+	height: 14px;
+	background: currentcolor;
+	opacity: 0.3;
+	border-radius: 2px;
+	vertical-align: middle;
+	margin-inline-end: 6px;
+}
+
+.findable-bulk progress {
+	width: 320px;
+	max-width: 100%;
+	vertical-align: middle;
+}
+
+.findable-pct {
+	opacity: 0.8;
+	font-size: 12px;
+}
+
+#findable-connection-result.ok {
+	color: #1a5c1a;
+}
+
+#findable-connection-result.fail {
+	color: #8a2424;
+}

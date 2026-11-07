@@ -1,0 +1,228 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  phpcs:
+    name: PHPCS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+
+      - name: Install
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Lint
+        run: composer lint
+
+  phpunit:
+    name: PHPUnit (PHP ${{ matrix.php }} / WP ${{ matrix.wp }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.4', '8.1', '8.3', 'latest']
+        wp: ['6.5', 'latest']
+        exclude:
+          - php: '7.4'
+            wp: 'latest' # Latest WP no longer supports PHP 7.4.
+          - php: 'latest'
+            wp: '6.5' # Keep the old-WP rows on old PHP.
+    services:
+      mysql:
+        image: mysql:8
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mysql
+          coverage: none
+          tools: composer:v2
+
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Install WP test suite
+        run: bash bin/install-wp-tests.sh wordpress_test root root 127.0.0.1:3306 ${{ matrix.wp }} true
+
+      - name: Run tests
+        run: composer test
+        env:
+          WP_TESTS_DIR: /tmp/wordpress-tests-lib
+
+  js:
+    name: JS lint, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint JS
+        run: npm run lint:js
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: build/
+          retention-days: 5
+
+  i18n:
+    name: POT freshness
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - name: Install wp-cli
+        run: |
+          curl -sL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o /usr/local/bin/wp
+          chmod +x /usr/local/bin/wp
+
+      - name: Regenerate POT
+        run: wp i18n make-pot . /tmp/findable.pot --exclude=vendor,node_modules,build,tests,bin,.github,.wordpress-org
+
+      - name: Compare msgids
+        run: |
+          if [ ! -f languages/findable.pot ]; then
+            if grep -q 'msgid' /tmp/findable.pot; then
+              echo "languages/findable.pot missing but sources have strings"; exit 1
+            fi
+            exit 0
+          fi
+          grep -o 'msgid "[^"]*"' /tmp/findable.pot | sort > /tmp/pot-new.txt
+          grep -o 'msgid "[^"]*"' languages/findable.pot | sort > /tmp/pot-old.txt
+          diff -u /tmp/pot-old.txt /tmp/pot-new.txt || {
+            echo "::error::languages/findable.pot is stale. Run: npm run make-pot"
+            exit 1
+          }
+
+  consistency:
+    name: Consistency checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Version consistency
+        run: |
+          HEADER=$(grep -oP '^ \* Version: \K.*' findable.php | head -1)
+          CONSTANT=$(grep -oP "define\( 'FINDABLE_VERSION', '([^']+)'" -o findable.php | grep -oP "'[^']+'\)$" | tr -d "'")
+          STABLE=$(sed -n 's/^Stable tag: *//p' readme.txt)
+          echo "header=$HEADER constant=$CONSTANT stable=$STABLE"
+          [ "$HEADER" = "$CONSTANT" ] || { echo "findable.php Version != FINDABLE_VERSION"; exit 1; }
+          [ "$HEADER" = "$STABLE" ] || { echo "findable.php Version != readme.txt Stable tag"; exit 1; }
+
+      - name: No stray HTTP calls
+        run: |
+          STRAYS=$(grep -rn 'wp_safe_remote_\|wp_remote_' findable.php uninstall.php includes/ data/ | grep -v 'includes/class-api-client.php' || true)
+          if [ -n "$STRAYS" ]; then
+            echo "::error::wp_remote_* found outside includes/class-api-client.php"
+            echo "$STRAYS"
+            exit 1
+          fi
+
+      - name: readme tags
+        run: |
+          TAGS=$(sed -n 's/^Tags: *//p' readme.txt | tr ',' '\n' | sed 's/^ *//;s/ *$//' | grep -c . || true)
+          echo "tags=$TAGS"
+          [ "$TAGS" -le 5 ] || { echo "readme.txt has more than 5 tags"; exit 1; }
+
+      - name: No direct file access missing
+        run: |
+          for f in includes/*.php data/*.php uninstall.php; do
+            grep -q "ABSPATH\|WP_UNINSTALL_PLUGIN" "$f" || { echo "::error::$f lacks an ABSPATH/WP_UNINSTALL_PLUGIN guard"; exit 1; }
+          done
+
+  plugin-check:
+    name: Plugin Check
+    runs-on: ubuntu-latest
+    needs: [js]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build
+          path: build/
+
+      - name: Build zip
+        run: |
+          mkdir -p /tmp/dist
+          zip -r /tmp/dist/findable.zip . -x '*.git*' 'node_modules/*' 'vendor/*' 'tests/*' '.github/*' '.wordpress-org/*' 'openspec/*' 'bin/*' '*.map' '*.zip' 'dist/*' '.pi/*' > /dev/null
+
+      - name: Run Plugin Check
+        uses: WordPress/plugin-check-action@v1
+        with:
+          build-dir: /tmp/dist
+          wp-version: latest
+
+  license-audit:
+    name: License audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: No runtime composer dependencies
+        run: |
+          REQUIRE=$(php -r '$j = json_decode(file_get_contents("composer.json"), true); echo count($j["require"] ?? []);')
+          [ "$REQUIRE" = "0" ] || { echo "::error::composer.json has runtime dependencies"; exit 1; }
+
+      - name: No runtime npm dependencies shipped
+        run: |
+          DEPS=$(node -e 'const p = require("./package.json"); console.log(Object.keys(p.dependencies || {}).length);')
+          [ "$DEPS" = "0" ] || { echo "::error::package.json has runtime dependencies"; exit 1; }
+
+      - name: GPL-compatible LICENSE present
+        run: head -3 LICENSE | grep -q 'GNU GENERAL PUBLIC LICENSE'
