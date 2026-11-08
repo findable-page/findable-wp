@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<phpunit
+	bootstrap="tests/bootstrap-constants.php"
+	backupGlobals="false"
+	colors="true"
+	convertErrorsToExceptions="true"
+	convertNoticesToExceptions="true"
+	convertWarningsToExceptions="true"
+>
+	<testsuites>
+		<testsuite name="findable-constants">
+			<directory prefix="test-" suffix=".php">./tests/constants/</directory>
+		</testsuite>
+	</testsuites>
+</phpunit>

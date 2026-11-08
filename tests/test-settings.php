@@ -130,4 +130,40 @@ class Test_Settings extends Findable_TestCase {
 		update_option( 'findable_settings', array( 'endpoint' => 'https://findable.example.com:8080' ), false );
 		$this->assertFalse( Settings::endpoint_port_unreachable() );
 	}
+
+	public function test_endpoint_rejects_query_fragment_and_unparseable_values() {
+		foreach ( array( 'https://x.example.com?a=1', 'https://x.example.com#frag' ) as $url ) {
+			$this->assertSame( 'findable_endpoint', Settings::sanitize_endpoint( $url )->get_error_code(), $url );
+		}
+		foreach ( array( '', '   ', '/api/scan', 'not a url', 'http://' ) as $url ) {
+			$this->assertWPError( Settings::sanitize_endpoint( $url ), $url );
+		}
+		$this->assertWPError( Settings::sanitize_endpoint( 'https://user:pw@x.example.com' ) );
+	}
+
+	public function test_non_array_input_changes_nothing() {
+		$this->assertSame( Settings::all(), Settings::sanitize( 'garbage' ) );
+	}
+
+	public function test_non_array_stored_post_types_fall_back_to_defaults() {
+		update_option( 'findable_settings', array( 'post_types' => 'garbage' ), false );
+		$this->assertSame( array( 'post', 'page' ), Settings::get( 'post_types' ) );
+	}
+
+	public function test_register_exposes_option_with_sanitizer() {
+		Settings::register();
+		$registered = get_registered_settings();
+		$this->assertSame( array( Settings::class, 'sanitize' ), $registered['findable_settings']['sanitize_callback'] );
+		$this->assertFalse( $registered['findable_settings']['show_in_rest'] );
+	}
+
+	public function test_endpoint_port_defaults_for_http_and_private_constant_in_other_tests() {
+		update_option( 'findable_settings', array( 'endpoint' => 'http://findable.example.com' ), false );
+		$this->assertFalse( Settings::endpoint_port_unreachable() );
+	}
+
+	public function test_endpoint_with_characters_that_escape_to_nothing_is_rejected() {
+		$this->assertSame( 'findable_endpoint', Settings::sanitize_endpoint( 'http://<>' )->get_error_code() );
+		$this->assertSame( 'findable_endpoint', Settings::sanitize_endpoint( 'https://"' )->get_error_code() );
+	}
 }

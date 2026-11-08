@@ -127,4 +127,37 @@ class Test_Result extends Findable_TestCase {
 		$this->assertWPError( Result::normalize( 'nope' ) );
 		$this->assertWPError( Result::normalize( null ) );
 	}
+
+	public function test_non_array_family_or_check_container_is_error() {
+		foreach ( array( 'seo', 'aeo', 'geo' ) as $family ) {
+			$response                       = $this->scan_response();
+			$response[ $family ]['checks'] = 'nope';
+			$this->assertWPError( Result::normalize( $response ), $family );
+		}
+	}
+
+	public function test_check_without_label_uses_id_and_malformed_checks_are_dropped() {
+		$response                    = $this->scan_response();
+		$response['seo']['checks'][] = 'not-an-array';
+		$response['seo']['checks'][] = array( 'id' => 'no_pass_field', 'label' => 'x' );
+		$response['seo']['checks'][] = array( 'id' => 'pass_not_bool', 'pass' => 'yes' );
+		$response['seo']['checks'][] = array( 'id' => 'no_label_check', 'pass' => true );
+		$result                      = Result::normalize( $response );
+
+		$ids = wp_list_pluck( $result['checks'], 'id' );
+		$this->assertNotContains( 'no_pass_field', $ids );
+		$this->assertNotContains( 'pass_not_bool', $ids );
+		$this->assertContains( 'no_label_check', $ids );
+		$labels = wp_list_pluck( $result['checks'], 'label', 'id' );
+		$this->assertSame( 'no_label_check', $labels['no_label_check'] );
+	}
+
+	public function test_band_labels_and_failing_edge_cases() {
+		$this->assertSame( 'Good', Result::band_label( 'good' ) );
+		$this->assertSame( 'Needs work', Result::band_label( 'needs_work' ) );
+		$this->assertSame( 'Poor', Result::band_label( 'poor' ) );
+		$this->assertSame( 'Poor', Result::band_label( 'anything-else' ) );
+		$this->assertSame( array(), Result::failing( array() ) );
+		$this->assertSame( array(), Result::failing( array( 'checks' => 'x' ) ) );
+	}
 }

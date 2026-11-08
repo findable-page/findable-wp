@@ -118,4 +118,20 @@ class Test_Fix_Advice extends Findable_TestCase {
 		$this->assertSame( array(), $map );
 		$this->assertCount( 1, $calls );
 	}
+
+	public function test_label_prefers_localized_name_then_stored_label_then_id() {
+		set_transient( 'findable_check_text_de', array( 'title_length' => array( 'name' => 'Titellänge', 'fix' => 'x' ) ), HOUR_IN_SECONDS );
+
+		$this->assertSame( 'Titellänge', Fix_Advice::label( array( 'id' => 'title_length', 'label' => 'Title length' ), 'de_DE' ) );
+		$this->assertSame( 'Title length', Fix_Advice::label( array( 'id' => 'other', 'label' => 'Title length' ), 'de_DE' ) );
+		$this->assertSame( 'only_id', Fix_Advice::label( array( 'id' => 'only_id' ), 'de_DE' ) );
+		$this->assertSame( '', Fix_Advice::label( array(), '' ) );
+		$this->assertSame( 'Stored', Fix_Advice::label( array( 'label' => 'Stored' ), 'de_DE' ) );
+	}
+
+	public function test_empty_localized_name_falls_back() {
+		set_transient( 'findable_check_text_de', array( 'title_length' => array( 'name' => '', 'fix' => '' ) ), HOUR_IN_SECONDS );
+		$this->assertSame( 'Title length', Fix_Advice::label( array( 'id' => 'title_length', 'label' => 'Title length' ), 'de_DE' ) );
+		$this->assertStringContainsString( 'Keep the title', Fix_Advice::for_check( 'title_length', 'de_DE' ) );
+	}
 }

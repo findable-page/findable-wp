@@ -118,6 +118,60 @@ class Test_Migrate extends Findable_TestCase {
 		Migrate::dismiss_fix_notice();
 		$this->assertTrue( Migrate::fix_notice_dismissed() );
 	}
+
+	public function test_convert_skips_malformed_rows_and_caps_checks() {
+		$failing = array( 'not-an-array', array( 'label' => '' ), array( 'label' => 'Ok label', 'group' => 'nope' ) );
+		for ( $i = 0; $i < Result::MAX_CHECKS + 5; $i++ ) {
+			$failing[] = array( 'label' => 'Row ' . $i, 'group' => 'geo' );
+		}
+		$converted = Migrate::convert( array( 'overall' => 150, 'seo' => 'x', 'failing' => $failing ) );
+
+		$this->assertCount( Result::MAX_CHECKS, $converted['checks'] );
+		$this->assertSame( 'seo', $converted['checks'][0]['f'], 'Unknown group falls back to seo.' );
+		$this->assertSame( 100, $converted['overall'], 'Overall is clamped.' );
+		$this->assertSame( 0, $converted['families']['seo']['score'], 'Non-numeric family score is 0.' );
+	}
+
+	public function test_convert_without_failing_list_or_timestamp() {
+		$converted = Migrate::convert( array() );
+		$this->assertSame( array(), $converted['checks'] );
+		$this->assertSame( 0, $converted['overall'] );
+		$this->assertSame( '', $converted['url'] );
+		$this->assertEqualsWithDelta( time(), $converted['scanned_at'], 5 );
+	}
+
+	public function test_already_migrated_post_only_loses_legacy_copy() {
+		$post_id = $this->create_scannable_post();
+		$result  = Result::normalize( $this->scan_response() );
+		update_post_meta( $post_id, '_findable_result', $result );
+		update_post_meta( $post_id, '_findable_scan', $this->legacy_scan() );
+
+		Migrate::run_batch();
+
+		$this->assertSame( $result['overall'], Store::get( $post_id )['overall'] );
+		$this->assertSame( '', (string) get_post_meta( $post_id, '_findable_scan', true ) );
+	}
+
+	public function test_malformed_legacy_meta_is_dropped_without_result() {
+		$post_id = $this->create_scannable_post();
+		update_post_meta( $post_id, '_findable_scan', array( 'no_overall' => 1 ) );
+
+		Migrate::run_batch();
+
+		$this->assertNull( Store::get( $post_id ) );
+		$this->assertSame( '', (string) get_post_meta( $post_id, '_findable_scan', true ) );
+	}
+
+	public function test_full_batch_keeps_migration_open_for_next_request() {
+		for ( $i = 0; $i < Migrate::BATCH; $i++ ) {
+			$post_id = $this->create_scannable_post();
+			update_post_meta( $post_id, '_findable_scan', $this->legacy_scan() );
+		}
+		Migrate::maybe_migrate();
+		$this->assertFalse( get_option( 'findable_db_version' ) );
+		Migrate::maybe_migrate();
+		$this->assertEquals( 1, get_option( 'findable_db_version' ) );
+	}
 }
 
 class Test_Dashboard_Aggregate extends Findable_TestCase {
@@ -230,5 +284,37 @@ class Test_Dashboard_Aggregate extends Findable_TestCase {
 		$this->assertSame( 0, $agg['scanned'] );
 		// Meta still exists.
 		$this->assertNotNull( Store::get( $post_id ) );
+	}
+
+	public function test_posts_without_stored_result_are_skipped_by_aggregate() {
+		$post_id = $this->create_scannable_post();
+		update_post_meta( $post_id, '_findable_result', 'garbage' );
+		$this->assertSame( 0, Store::aggregate( true )['scanned'] );
+	}
+
+	public function test_aggregate_walks_multiple_batches() {
+		$ids = array();
+		for ( $i = 0; $i < 201; $i++ ) {
+			$ids[] = $this->create_scannable_post();
+		}
+		foreach ( $ids as $id ) {
+			update_post_meta( $id, '_findable_result', Result::normalize( $this->scan_response() ) );
+		}
+		$agg = Store::aggregate( true );
+		$this->assertSame( 201, $agg['scanned'] );
+		$this->assertCount( 10, $agg['weakest'] );
+	}
+
+	public function test_aggregate_recompute_false_returns_cached_value() {
+		set_transient( 'findable_dashboard', array( 'cached' => true ), HOUR_IN_SECONDS );
+		$this->assertSame( array( 'cached' => true ), Store::aggregate() );
+	}
+
+	public function test_aggregate_counts_failing_from_result_when_field_missing() {
+		$post_id = $this->create_scannable_post();
+		$result  = Result::normalize( $this->scan_response() );
+		unset( $result['failing'] );
+		update_post_meta( $post_id, '_findable_result', $result );
+		$this->assertSame( 3, Store::aggregate( true )['weakest'][0]['failing'] );
 	}
 }

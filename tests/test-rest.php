@@ -241,4 +241,99 @@ class Test_Rest extends Findable_TestCase {
 		$this->assertFalse( $data['connected'] );
 		$this->assertStringStartsWith( 'Could not reach the endpoint:', $data['message'] );
 	}
+
+	private function as_admin() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		delete_option( 'findable_bulk' );
+		wp_clear_scheduled_hook( Findable\Bulk_Scan::TICK );
+	}
+
+	public function test_bulk_get_includes_status_and_eta_text() {
+		$this->as_admin();
+		$data = $this->dispatch( 'GET', '/findable/v1/bulk' )->get_data();
+		$this->assertSame( 'idle', $data['status'] );
+		$this->assertSame( 'Idle.', $data['status_text'] );
+		$this->assertSame( 'About 0 minutes remaining.', $data['eta_text'] );
+	}
+
+	public function test_bulk_start_pause_resume_cancel_lifecycle() {
+		$this->as_admin();
+		$this->create_scannable_post();
+
+		$started = $this->dispatch( 'POST', '/findable/v1/bulk', array( 'force' => true ) );
+		$this->assertSame( 200, $started->get_status() );
+		$this->assertSame( 'running', $started->get_data()['status'] );
+		$this->assertTrue( $started->get_data()['force'] );
+
+		$this->assertSame( 'paused', $this->dispatch( 'POST', '/findable/v1/bulk', array( 'action' => 'pause' ) )->get_data()['status'] );
+		$this->assertSame( 'running', $this->dispatch( 'POST', '/findable/v1/bulk', array( 'action' => 'resume' ) )->get_data()['status'] );
+		$this->assertSame( 'cancelled', $this->dispatch( 'DELETE', '/findable/v1/bulk' )->get_data()['status'] );
+		wp_clear_scheduled_hook( Findable\Bulk_Scan::TICK );
+	}
+
+	public function test_bulk_start_defaults_to_non_force_and_second_start_conflicts() {
+		$this->as_admin();
+		$this->create_scannable_post();
+
+		$first = $this->dispatch( 'POST', '/findable/v1/bulk' );
+		$this->assertFalse( $first->get_data()['force'] );
+
+		$second = $this->dispatch( 'POST', '/findable/v1/bulk' );
+		$this->assertSame( 409, $second->get_status() );
+		wp_clear_scheduled_hook( Findable\Bulk_Scan::TICK );
+	}
+
+	public function test_bulk_rejects_unknown_action() {
+		$this->as_admin();
+		$this->assertSame( 400, $this->dispatch( 'POST', '/findable/v1/bulk', array( 'action' => 'explode' ) )->get_status() );
+	}
+
+	public function test_bulk_handler_unknown_action_without_force_is_400() {
+		$this->as_admin();
+		$request = new WP_REST_Request( 'POST', '/findable/v1/bulk' );
+		$request->set_param( 'action', 'explode' );
+		$response = Rest::handle_bulk_post( $request );
+		$this->assertWPError( $response );
+		$this->assertSame( 400, $response->get_error_data()['status'] );
+	}
+
+	public function test_bulk_handler_force_param_starts_even_with_other_action_value() {
+		$this->as_admin();
+		$this->create_scannable_post();
+		$request = new WP_REST_Request( 'POST', '/findable/v1/bulk' );
+		$request->set_param( 'action', 'something' );
+		$request->set_param( 'force', '1' );
+		$response = Rest::handle_bulk_post( $request );
+		$this->assertSame( 'running', $response->get_data()['status'] );
+		wp_clear_scheduled_hook( Findable\Bulk_Scan::TICK );
+	}
+
+	public function test_scan_result_payload_without_result_uses_permalink_for_report() {
+		$this->as_admin();
+		$post_id = $this->create_scannable_post();
+		$payload = Rest::result_payload( $post_id, null );
+		$this->assertSame( array(), $payload['advice'] );
+		$this->assertSame( array(), $payload['labels'] );
+		$this->assertFalse( $payload['fresh'] );
+		$this->assertSame( 0, $payload['age_seconds'] );
+		$this->assertStringStartsWith( 'https://findable.page/', $payload['report_url'] );
+	}
+
+	public function test_scan_route_rejects_overlong_keyphrase() {
+		$this->as_admin();
+		$post_id  = $this->create_scannable_post();
+		$response = $this->dispatch( 'POST', "/findable/v1/posts/{$post_id}/scan", array( 'keyphrase' => str_repeat( 'a', 101 ) ) );
+		$this->assertSame( 400, $response->get_status() );
+	}
+
+	public function test_scan_route_unexpected_wp_error_maps_to_500() {
+		$this->as_admin();
+		$post_id = $this->create_scannable_post();
+		// A post type switched off between permission check and scan yields the guard error (400).
+		update_option( 'findable_settings', array( 'post_types' => array( 'page' ) ), false );
+		$response = $this->dispatch( 'POST', "/findable/v1/posts/{$post_id}/scan" );
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'findable_not_scannable', $response->get_data()['code'] );
+		$this->assertFalse( get_transient( 'findable_scan_lock_' . $post_id ), 'A refused scan must release the lock.' );
+	}
 }

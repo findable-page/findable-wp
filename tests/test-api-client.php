@@ -216,4 +216,55 @@ class Test_Api_Client extends Findable_TestCase {
 		$this->assertStringNotContainsString( 'sekrit123', $error->get_error_message() );
 		$this->assertStringContainsString( '***', $error->get_error_message() );
 	}
+
+	public function test_5xx_without_json_uses_generic_message() {
+		$this->stub_http( $this->http_response( 503, 'oops' ) );
+		$error = Api_Client::instance()->scan( 'https://example.com/hello/' );
+		$this->assertSame( 'findable_server', $error->get_error_code() );
+		$this->assertSame( 'The Findable API had a server error. Try again later.', $error->get_error_message() );
+	}
+
+	public function test_unexpected_status_maps_to_bad_response() {
+		$this->stub_http( $this->http_response( 418, wp_json_encode( array( 'error' => 'teapot' ) ) ) );
+		$this->assertSame( 'teapot', Api_Client::instance()->scan( 'https://example.com/hello/' )->get_error_message() );
+
+		$this->stub_http( $this->http_response( 302, '' ) );
+		$this->assertSame( 'findable_bad_response', Api_Client::instance()->scan( 'https://example.com/hello/' )->get_error_code() );
+	}
+
+	public function test_rate_limit_without_body_uses_default_message() {
+		$this->stub_http( $this->http_response( 429, 'slow down' ) );
+		$error = Api_Client::instance()->scan( 'https://example.com/hello/' );
+		$this->assertStringContainsString( '10 scans per minute', $error->get_error_message() );
+	}
+
+	public function test_check_text_propagates_errors_and_returns_map() {
+		$this->stub_http( $this->http_response( 500, 'down' ) );
+		$this->assertWPError( Api_Client::instance()->check_text( 'de' ) );
+
+		$this->stub_http( $this->http_response( 200, wp_json_encode( array( 'BAD ID' => array( 'name' => 'x' ), 'ok_id' => 'not-array', 'good_id' => array( 'name' => 'N', 'fix' => 'F' ) ) ) ) );
+		$this->assertSame( array( 'good_id' => array( 'name' => 'N', 'fix' => 'F' ) ), Api_Client::instance()->check_text( 'de' ) );
+	}
+
+	public function test_check_text_ignores_non_string_fields() {
+		$this->stub_http( $this->http_response( 200, wp_json_encode( array( 'good_id' => array( 'name' => 5, 'fix' => array() ) ) ) ) );
+		$this->assertSame( array( 'good_id' => array( 'name' => '', 'fix' => '' ) ), Api_Client::instance()->check_text( 'de' ) );
+	}
+
+	public function test_non_string_stored_key_is_ignored() {
+		update_option( 'findable_api_key', array( 'x' ), false );
+		$this->assertSame( '', Api_Client::instance()->api_key() );
+	}
+
+	public function test_json_array_body_with_200_but_scalar_is_bad_response() {
+		$this->stub_http( $this->http_response( 200, '"just a string"' ) );
+		$this->assertSame( 'findable_bad_response', Api_Client::instance()->scan( 'https://example.com/hello/' )->get_error_code() );
+	}
+
+	public function test_get_requests_use_safe_get_by_default() {
+		$this->stub_http( $this->http_response( 200, wp_json_encode( array( 'status' => 'ok', 'name' => 'findable', 'version' => '1' ) ) ), $calls );
+		Api_Client::instance()->health();
+		$this->assertSame( 'GET', $calls[0]['args']['method'] );
+		$this->assertTrue( $calls[0]['args']['reject_unsafe_urls'] );
+	}
 }

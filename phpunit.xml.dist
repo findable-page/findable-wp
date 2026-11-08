@@ -10,6 +10,7 @@
 	<testsuites>
 		<testsuite name="findable">
 			<directory prefix="test-" suffix=".php">./tests/</directory>
+			<exclude>./tests/constants</exclude>
 		</testsuite>
 	</testsuites>
 	<groups>
