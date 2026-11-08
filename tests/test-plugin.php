@@ -112,4 +112,18 @@ class Test_Plugin extends Findable_TestCase {
 		$this->assertContains( 'Findable', wp_list_pluck( $policy, 'plugin_name' ) );
 		$this->assertStringContainsString( 'https://findable.page/privacy', $texts );
 	}
+
+	public function test_dashboard_cache_is_flushed_when_posts_change_status_or_are_deleted() {
+		$this->set_booted( false );
+		Plugin::instance()->boot();
+
+		$post_id = $this->create_scannable_post();
+		set_transient( 'findable_dashboard', array( 'x' => 1 ), HOUR_IN_SECONDS );
+		wp_update_post( array( 'ID' => $post_id, 'post_status' => 'draft' ) );
+		$this->assertFalse( get_transient( 'findable_dashboard' ), 'status change' );
+
+		set_transient( 'findable_dashboard', array( 'x' => 1 ), HOUR_IN_SECONDS );
+		wp_delete_post( $post_id, true );
+		$this->assertFalse( get_transient( 'findable_dashboard' ), 'delete' );
+	}
 }

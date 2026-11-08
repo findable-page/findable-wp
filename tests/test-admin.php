@@ -152,6 +152,8 @@ class Test_Admin extends Findable_TestCase {
 		}
 		set_current_screen( 'post' );
 		$GLOBALS['current_screen']->post_type = 'post';
+		wp_dequeue_script( 'findable-editor' );
+		wp_deregister_script( 'findable-editor' );
 		Admin::enqueue_assets( 'post.php' );
 		$this->assertSame( FINDABLE_VERSION, wp_scripts()->registered['findable-editor']->ver );
 		if ( null !== $backup ) {
@@ -699,5 +701,19 @@ class Test_Admin extends Findable_TestCase {
 		$this->assertDoesNotMatchRegularExpression( '/value="post" checked/', $html );
 		$this->assertStringContainsString( 'value="7"', $this->render( array( Admin::class, 'render_field_cache_ttl_days' ) ) );
 		$this->assertStringContainsString( 'value="5"', $this->render( array( Admin::class, 'render_field_bulk_per_minute' ) ) );
+	}
+
+	public function test_settings_page_shows_core_saved_notice_and_plugin_errors() {
+		Admin::admin_init();
+		Admin::register_settings_ui();
+		add_settings_error( 'general', 'settings_updated', 'Settings saved.', 'success' );
+		add_settings_error( 'findable_settings', 'findable_endpoint', 'Enter an http or https URL.' );
+		set_transient( 'settings_errors', get_settings_errors(), 30 );
+		$_GET['settings-updated'] = 'true';
+
+		$html = $this->render( array( Admin::class, 'render_settings' ) );
+
+		$this->assertStringContainsString( 'Settings saved.', $html );
+		$this->assertStringContainsString( 'Enter an http or https URL.', $html );
 	}
 }

@@ -58,6 +58,10 @@ class Plugin {
 		add_action( Bulk_Scan::SCAN_POST, array( Bulk_Scan::class, 'scan_post_event' ) );
 		add_action( 'transition_post_status', array( $this, 'on_transition_post_status' ), 10, 3 );
 
+		// The dashboard aggregate is cached; any change to the set of scannable posts invalidates it.
+		add_action( 'transition_post_status', array( $this, 'flush_dashboard_cache' ) );
+		add_action( 'deleted_post', array( $this, 'flush_dashboard_cache' ) );
+
 		// Privacy policy suggestion.
 		add_action( 'admin_init', array( $this, 'privacy_policy' ) );
 
@@ -80,6 +84,13 @@ class Plugin {
 			return;
 		}
 		Bulk_Scan::schedule_scan_post( $post->ID );
+	}
+
+	/**
+	 * Drop the cached dashboard aggregate.
+	 */
+	public function flush_dashboard_cache() {
+		delete_transient( 'findable_dashboard' );
 	}
 
 	/**

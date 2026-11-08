@@ -687,7 +687,7 @@ class Admin {
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Findable Settings', 'findable' ); ?></h1>
 			<?php echo wp_kses_post( self::cron_hint() ); ?>
-			<?php settings_errors( 'findable_settings' ); ?>
+			<?php settings_errors(); // Unfiltered: core registers its "Settings saved." notice under the general slug. ?>
 			<form action="options.php" method="post">
 				<?php settings_fields( 'findable_settings' ); ?>
 				<input type="hidden" name="findable_settings[_form]" value="1">
