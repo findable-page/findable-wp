@@ -99,3 +99,9 @@ describe( 'formatAge', () => {
 		expect( formatAge( 172800 ) ).toBe( '2 days ago' );
 	} );
 } );
+
+describe( 'byFamily with no checks', () => {
+	it( 'returns empty groups for null', () => {
+		expect( byFamily( null ) ).toEqual( { seo: [], aeo: [], geo: [] } );
+	} );
+} );
