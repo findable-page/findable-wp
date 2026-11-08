@@ -154,8 +154,8 @@ jobs:
 
       - name: Version consistency
         run: |
-          HEADER=$(grep -oP '^ \* Version: \K.*' findable.php | head -1)
-          CONSTANT=$(grep -oP "define\( 'FINDABLE_VERSION', '([^']+)'" -o findable.php | grep -oP "'[^']+'\)$" | tr -d "'")
+          HEADER=$(sed -n 's/^ \* Version: *//p' findable.php)
+          CONSTANT=$(sed -n "s/.*define( 'FINDABLE_VERSION', '\([^']*\)'.*/\1/p" findable.php)
           STABLE=$(sed -n 's/^Stable tag: *//p' readme.txt)
           echo "header=$HEADER constant=$CONSTANT stable=$STABLE"
           [ "$HEADER" = "$CONSTANT" ] || { echo "findable.php Version != FINDABLE_VERSION"; exit 1; }
@@ -196,15 +196,15 @@ jobs:
           name: build
           path: build/
 
-      - name: Build zip
+      - name: Stage plugin directory
         run: |
-          mkdir -p /tmp/dist
-          zip -r /tmp/dist/findable.zip . -x '*.git*' 'node_modules/*' 'vendor/*' 'tests/*' '.github/*' '.wordpress-org/*' 'openspec/*' 'bin/*' '*.map' '*.zip' 'dist/*' '.pi/*' > /dev/null
+          mkdir -p /tmp/dist/findable
+          rsync -a --exclude-from=.distignore ./ /tmp/dist/findable/
 
       - name: Run Plugin Check
         uses: WordPress/plugin-check-action@v1
         with:
-          build-dir: /tmp/dist
+          build-dir: /tmp/dist/findable
           wp-version: latest
 
   license-audit:

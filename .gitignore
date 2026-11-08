@@ -3,6 +3,8 @@ node_modules/
 .phpunit.result.cache
 .phpunit.cache/
 dist/
+build/
+.pi/
 *.zip
 composer.phar
 .wp-env

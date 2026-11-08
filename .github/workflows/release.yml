@@ -12,13 +12,16 @@ jobs:
   release:
     name: Build and publish
     runs-on: ubuntu-latest
+    env:
+      SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+      SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Verify tag matches plugin version
         run: |
-          VERSION=$(grep -oP '^ \* Version: \K.*' findable.php | head -1)
+          VERSION=$(sed -n 's/^ \* Version: *//p' findable.php)
           STABLE=$(sed -n 's/^Stable tag: *//p' readme.txt)
           TAG="${GITHUB_REF_NAME#v}"
           echo "version=$VERSION stable=$STABLE tag=$TAG"
@@ -53,10 +56,8 @@ jobs:
 
       - name: Deploy to WordPress.org
         if: ${{ env.SVN_USERNAME != '' && env.SVN_PASSWORD != '' }}
-        uses: 10up/action-wordpress-plugin-deploy@stable
+        uses: 10up/action-wordpress-plugin-deploy@54bd289b8525fd23a5c365ec369185f2966529c2 # stable, pinned
         env:
-          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
-          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
           SLUG: findable
           BUILD_DIR: .
           ASSETS_DIR: .wordpress-org

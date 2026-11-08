@@ -37,7 +37,6 @@ elif [[ "$WP_VERSION" == 'trunk' ]]; then
 else
 	# Latest stable.
 	download "https://api.wordpress.org/core/version-check/1.7/" /tmp/wp-latest.json
-	grep '[0-9]+\.[0-9]+\.[0-9]+' /tmp/wp-latest.json
 	WP_VERSION=$(grep -o '"version":"[0-9]*\.[0-9]*\.[0-9]*"' /tmp/wp-latest.json | head -1 | sed 's/"version":"//;s/"//')
 	WP_TESTS_TAG="tags/$WP_VERSION"
 fi
@@ -76,6 +75,39 @@ install_db() {
 	"
 }
 
+install_config() {
+	if [ -f "$WP_TESTS_DIR/wp-tests-config.php" ]; then
+		return
+	fi
+	cat > "$WP_TESTS_DIR/wp-tests-config.php" <<CONFIG
+<?php
+define( 'ABSPATH', '$WP_CORE_DIR/' );
+define( 'WP_DEFAULT_THEME', 'default' );
+define( 'WP_DEBUG', true );
+define( 'DB_NAME', '$DB_NAME' );
+define( 'DB_USER', '$DB_USER' );
+define( 'DB_PASSWORD', '$DB_PASS' );
+define( 'DB_HOST', '$DB_HOST' );
+define( 'DB_CHARSET', 'utf8' );
+define( 'DB_COLLATE', '' );
+define( 'AUTH_KEY', 'findable-test' );
+define( 'SECURE_AUTH_KEY', 'findable-test' );
+define( 'LOGGED_IN_KEY', 'findable-test' );
+define( 'NONCE_KEY', 'findable-test' );
+define( 'AUTH_SALT', 'findable-test' );
+define( 'SECURE_AUTH_SALT', 'findable-test' );
+define( 'LOGGED_IN_SALT', 'findable-test' );
+define( 'NONCE_SALT', 'findable-test' );
+\$table_prefix = 'wptests_';
+define( 'WP_TESTS_DOMAIN', 'example.org' );
+define( 'WP_TESTS_EMAIL', 'admin@example.org' );
+define( 'WP_TESTS_TITLE', 'Test Blog' );
+define( 'WP_PHP_BINARY', 'php' );
+define( 'WPLANG', '' );
+CONFIG
+}
+
 install_wp
 install_test_suite
+install_config
 install_db
