@@ -16,7 +16,7 @@ class Test_Bulk_Scan extends Findable_TestCase {
 		delete_option( 'findable_settings' );
 		delete_option( 'findable_bulk' );
 		delete_option( 'findable_bulk_consecutive' );
-		delete_transient( Bulk_Scan::LOCK );
+		delete_option( Bulk_Scan::LOCK );
 		delete_transient( 'findable_dashboard' );
 		wp_clear_scheduled_hook( Bulk_Scan::TICK );
 		_cron_wp_clear_scan_post_events();
@@ -87,7 +87,7 @@ class Test_Bulk_Scan extends Findable_TestCase {
 		$this->assertSame( 'running', $state['status'] );
 		$this->assertSame( 3, $state['done'] );
 		$this->assertSame( $posts[2], $state['cursor'] );
-		$this->assertFalse( get_transient( Bulk_Scan::LOCK ), 'Completed tick must release lock before the next tick.' );
+		$this->assertFalse( get_option( Bulk_Scan::LOCK ), 'Completed tick must release lock before the next tick.' );
 		Bulk_Scan::tick();
 		$this->assertSame( 6, Bulk_Scan::state()['done'] );
 	}
@@ -181,11 +181,23 @@ class Test_Bulk_Scan extends Findable_TestCase {
 		$this->create_scannable_post();
 		$this->stub_http( $this->ok_response(), $calls );
 
-		set_transient( Bulk_Scan::LOCK, 1, 120 );
+		add_option( Bulk_Scan::LOCK, time(), '', false );
 		Bulk_Scan::start( false );
 		Bulk_Scan::tick();
 
 		$this->assertCount( 0, $calls );
+	}
+
+	public function test_expired_lock_is_recovered() {
+		$this->create_scannable_post();
+		$this->stub_http( $this->ok_response(), $calls );
+		add_option( Bulk_Scan::LOCK, time() - 121, '', false );
+
+		Bulk_Scan::start( false );
+		Bulk_Scan::tick();
+
+		$this->assertCount( 1, $calls );
+		$this->assertFalse( get_option( Bulk_Scan::LOCK ) );
 	}
 
 	public function test_new_post_with_higher_id_joins_run() {

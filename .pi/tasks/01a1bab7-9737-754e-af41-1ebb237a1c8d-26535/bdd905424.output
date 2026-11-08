@@ -1,0 +1,7 @@
++ install_wp
++ '[' -f /var/folders/mg/ksymrhlj5tdcyj3cjfghp8w80000gn/T/wordpress/wp-load.php ']'
++ return
++ install_test_suite
++ '[' -f /var/folders/mg/ksymrhlj5tdcyj3cjfghp8w80000gn/T/wordpress-tests-lib/includes/bootstrap.php ']'
++ mkdir -p /var/folders/mg/ksymrhlj5tdcyj3cjfghp8w80000gn/T/wordpress-tests-lib
++ svn export --quiet https://develop.svn.wordpress.org/branches/6.5/tests/phpunit/includes/ /var/folders/mg/ksymrhlj5tdcyj3cjfghp8w80000gn/T/wordpress-tests-lib/includes

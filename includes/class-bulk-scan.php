@@ -25,7 +25,7 @@ class Bulk_Scan {
 	const SCAN_POST = 'findable_scan_post';
 
 	/**
-	 * Lock transient.
+	 * Atomic option lock (transients do not provide an atomic claim).
 	 */
 	const LOCK = 'findable_bulk_tick_lock';
 
@@ -201,10 +201,17 @@ class Bulk_Scan {
 			return;
 		}
 
-		if ( get_transient( self::LOCK ) ) {
-			return; // Another tick holds the lock.
+		// add_option is atomic across concurrent requests; an expired claim is recoverable.
+		if ( ! add_option( self::LOCK, time(), '', false ) ) {
+			$claimed_at = (int) get_option( self::LOCK );
+			if ( $claimed_at > time() - 120 ) {
+				return;
+			}
+			delete_option( self::LOCK );
+			if ( ! add_option( self::LOCK, time(), '', false ) ) {
+				return;
+			}
 		}
-		set_transient( self::LOCK, 1, 120 );
 
 		$state       = self::state();
 		$started     = microtime( true );
@@ -294,7 +301,7 @@ class Bulk_Scan {
 			}
 		} finally {
 			self::save_state( $state );
-			delete_transient( self::LOCK );
+			delete_option( self::LOCK );
 		}
 
 		self::schedule_next_tick( (int) $started + 60 );
@@ -382,6 +389,6 @@ class Bulk_Scan {
 			$state['status'] = 'paused';
 			self::save_state( $state );
 		}
-		delete_transient( self::LOCK );
+		delete_option( self::LOCK );
 	}
 }

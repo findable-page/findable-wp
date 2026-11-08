@@ -1,0 +1,73 @@
+For a WordPress.org submission, disclose every third-party service in `readme.txt`, run Plugin Check before upload, place display images in `assets/`, and declare a GPL-compatible license consistently in both the plugin header and readme.[1][2][3][4]
+
+## External service disclosure
+
+- Clearly explain that the plugin relies on a third-party service, when it does, which servers it calls, and whether an account or API key is required.[4]
+- Include links to the service and its Terms of Use and/or privacy policy.[1][4]
+- Make external calls as securely as possible; remote code loading is allowed only for documented services.[1]
+- If the plugin is fundamentally a service interface, the readme must document the service in enough detail that users understand what they are installing before installation.[1][4]
+
+**Official URL:** [https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/](https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/)[1]
+
+## Plugin Check
+
+Plugin Check tests whether a plugin meets WordPress.org directory standards and flags issues involving security, accessibility, performance, internationalization, and development best practices.[2]
+
+**Official URL:** [https://developer.wordpress.org/plugins/developer-tools/helper-plugins/](https://developer.wordpress.org/plugins/developer-tools/helper-plugins/)[2]
+
+## Assets
+
+- Put plugin headers, icons, and screenshots in the root-level `assets/` directory of the SVN checkout; these assets apply across plugin versions.[3]
+- Provide one screenshot for each screenshot line in `readme.txt`; screenshot captions come from those lines.[3]
+- Screenshots must be local, not loaded from an external domain.[3][4]
+
+**Official URL:** [https://developer.wordpress.org/plugins/wordpress-org/plugin-assets/](https://developer.wordpress.org/plugins/wordpress-org/plugin-assets/)[3]
+
+## License compatibility
+
+- Plugins must be compatible with GPLv2 or later; “GPLv2 or later” is recommended.[1][5]
+- All code, data, and images stored in the WordPress.org-hosted plugin directory must be GPL or GPL-compatible, including bundled third-party libraries and assets.[1][4]
+- Declare the same license in both the plugin header and `readme.txt`; document any third-party components and their licenses.[4]
+
+**Official URLs:**  
+- [https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/](https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/)[1]
+- [https://developer.wordpress.org/plugins/wordpress-org/common-issues/](https://developer.wordpress.org/plugins/wordpress-org/common-issues/)[4]
+
+## Readme requirements
+
+Use a standards-compliant `readme.txt`—not `readme.md`—and ensure it validates with the WordPress readme Validator.[4][6]
+
+Include:
+
+- A concise description of what the plugin does.[7]
+- Installation and configuration instructions, including a link to service registration if required.[7]
+- Support information and scope of support.[7]
+- Full service disclosure for external calls: service purpose, servers contacted, account requirements, and terms/privacy links.[4]
+- A declared GPL-compatible license.[4][6]
+
+**Official URLs:**  
+- [https://developer.wordpress.org/plugins/wordpress-org/how-your-readme-txt-works/](https://developer.wordpress.org/plugins/wordpress-org/how-your-readme-txt-works/)[6]
+- [https://developer.wordpress.org/plugins/wordpress-org/planning-submitting-and-maintaining-plugins/](https://developer.wordpress.org/plugins/wordpress-org/planning-submitting-and-maintaining-plugins/)[7]
+- [https://developer.wordpress.org/plugins/wordpress-org/common-issues/](https://developer.wordpress.org/plugins/wordpress-org/common-issues/)[4]
+
+Citations:
+[1]: https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/
+[2]: https://developer.wordpress.org/plugins/wordpress-org/how-your-readme-txt-works/
+[3]: https://developer.wordpress.org/plugins/
+[4]: https://developer.wordpress.org/plugins/wordpress-org/plugin-developer-faq/
+[5]: https://developer.wordpress.org/plugins/wordpress-org/plugin-assets/
+[6]: https://developer.wordpress.org/plugins/developer-tools/helper-plugins/
+[7]: https://developer.wordpress.org/plugins/plugin-basics/
+[8]: https://developer.wordpress.org/
+[9]: https://developer.wordpress.org/plugins/wordpress-org/common-issues/
+[10]: https://developer.wordpress.org/themes/releasing-your-theme/writing-documentation/
+[11]: https://developer.wordpress.org/plugins/wordpress-org/planning-submitting-and-maintaining-plugins/
+[12]: https://developer.wordpress.org/plugins/wordpress-org/how-to-use-subversion/
+[13]: https://developer.wordpress.org/plugins/wordpress-org/
+[14]: https://developer.wordpress.org/plugins/wordpress-org/compliance-disclaimers/
+[15]: https://developer.wordpress.org/news/2025/04/whats-new-for-developers-april-2025/
+
+---
+[Quota] Sonar 2 query completed (sonar) | Pro: 81 left | Research: 18 left
+
+[Conversation ID: 3d095106-b4c4-4239-b3e6-af6a0257bb29]

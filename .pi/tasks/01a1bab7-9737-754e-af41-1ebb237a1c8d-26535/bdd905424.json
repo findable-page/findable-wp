@@ -1,0 +1,30 @@
+{
+  "id": "bdd905424",
+  "name": "Set up WordPress tests",
+  "command": "bin/install-wp-tests.sh findable_test root '' localhost 6.5",
+  "description": "Fetch WP 6.5 PHPUnit fixtures",
+  "status": "killed",
+  "outputPath": ".pi/tasks/01a1bab7-9737-754e-af41-1ebb237a1c8d-26535/bdd905424.output",
+  "cwd": "/Users/nadimtuhin/code/findable-page/findable-wp",
+  "startTime": 1794134496235,
+  "endTime": 1794134499027,
+  "exitCode": null,
+  "signal": "SIGTERM",
+  "pid": 49732,
+  "bytesWritten": 482,
+  "isAgent": false,
+  "surviveReload": false,
+  "error": "Killed during Pi session shutdown (quit)",
+  "notified": false,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 300,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/zsh",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "posix"
+  }
+}

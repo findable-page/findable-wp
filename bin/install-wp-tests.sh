@@ -45,7 +45,7 @@ fi
 set -ex
 
 install_wp() {
-	if [ -d "$WP_CORE_DIR" ]; then
+	if [ -f "$WP_CORE_DIR/wp-load.php" ]; then
 		return
 	fi
 	mkdir -p "$WP_CORE_DIR"
@@ -58,7 +58,7 @@ install_wp() {
 }
 
 install_test_suite() {
-	if [ -d "$WP_TESTS_DIR" ]; then
+	if [ -f "$WP_TESTS_DIR/includes/bootstrap.php" ]; then
 		return
 	fi
 	mkdir -p "$WP_TESTS_DIR"
@@ -70,7 +70,7 @@ install_db() {
 	if [ "$SKIP_DB_CREATE" = 'true' ]; then
 		return
 	fi
-	php -r "
+	DB_NAME="$DB_NAME" DB_USER="$DB_USER" DB_PASS="$DB_PASS" DB_HOST="$DB_HOST" php -r "
 	\$pdo = new PDO( 'mysql:host=' . getenv( 'DB_HOST' ) . ';charset=utf8', getenv( 'DB_USER' ), getenv( 'DB_PASS' ) );
 	\$pdo->exec( 'CREATE DATABASE IF NOT EXISTS ' . getenv( 'DB_NAME' ) );
 	"
