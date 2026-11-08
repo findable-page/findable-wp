@@ -29,6 +29,15 @@
 	"scripts": {
 		"lint": "phpcs",
 		"fix": "phpcbf",
-		"test": "phpunit"
+		"test": [
+			"phpunit",
+			"phpunit -c phpunit-constants.xml.dist"
+		],
+		"test:coverage": [
+			"@php -d pcov.directory=. vendor/bin/phpunit --coverage-clover coverage/clover.xml --coverage-filter includes --coverage-filter uninstall.php --coverage-text",
+			"@php -d pcov.directory=. vendor/bin/phpunit -c phpunit-constants.xml.dist --coverage-clover coverage/clover-constants.xml --coverage-filter includes --coverage-filter uninstall.php",
+			"WP_MULTISITE=1 php -d pcov.directory=. vendor/bin/phpunit --coverage-clover coverage/clover-ms.xml --coverage-filter includes --coverage-filter uninstall.php",
+			"@php bin/check-coverage.php coverage/clover.xml,coverage/clover-constants.xml,coverage/clover-ms.xml 95 --missing"
+		]
 	}
 }
