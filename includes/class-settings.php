@@ -75,7 +75,7 @@ class Settings {
 			$settings['post_types'] = array( 'post', 'page' );
 		}
 		$types                  = array_values( array_intersect( $settings['post_types'], $public ) );
-		$settings['post_types'] = $types ? $types : array( 'post', 'page' );
+		$settings['post_types'] = $types;
 		return $settings;
 	}
 
@@ -90,23 +90,23 @@ class Settings {
 		$clean   = $old;
 		$changed = false;
 		$input   = is_array( $input ) ? $input : array();
+		$form    = ! empty( $input['_form'] );
 
 		if ( isset( $input['endpoint'] ) ) {
-			$endpoint = self::sanitize_endpoint( sanitize_text_field( wp_unslash( $input['endpoint'] ) ) );
+			$endpoint = self::sanitize_endpoint( sanitize_text_field( $input['endpoint'] ) );
 			if ( is_wp_error( $endpoint ) ) {
 				add_settings_error( 'findable_settings', 'findable_endpoint', $endpoint->get_error_message() );
 			} elseif ( $endpoint !== $old['endpoint'] ) {
 				$clean['endpoint'] = $endpoint;
 				$changed           = true;
-				delete_transient( 'findable_dashboard' );
 			}
 		}
 
-		if ( isset( $input['post_types'] ) && is_array( $input['post_types'] ) ) {
+		if ( $form || ( isset( $input['post_types'] ) && is_array( $input['post_types'] ) ) ) {
 			$public = get_post_types( array( 'public' => true ), 'names' );
 			unset( $public['attachment'] );
-			$types               = array_values( array_intersect( array_map( 'sanitize_key', wp_unslash( $input['post_types'] ) ), $public ) );
-			$clean['post_types'] = $types ? $types : array( 'post', 'page' );
+			$types               = array_values( array_intersect( array_map( 'sanitize_key', isset( $input['post_types'] ) && is_array( $input['post_types'] ) ? $input['post_types'] : array() ), $public ) );
+			$clean['post_types'] = $types;
 			$changed             = true;
 		}
 
@@ -120,17 +120,20 @@ class Settings {
 			$changed                  = true;
 		}
 
-		if ( isset( $input['scan_on_publish'] ) ) {
-			$clean['scan_on_publish'] = rest_sanitize_boolean( $input['scan_on_publish'] );
+		if ( $form || isset( $input['scan_on_publish'] ) ) {
+			$clean['scan_on_publish'] = isset( $input['scan_on_publish'] ) && rest_sanitize_boolean( $input['scan_on_publish'] );
 			$changed                  = true;
 		}
 
-		if ( isset( $input['delete_data_on_uninstall'] ) ) {
-			$clean['delete_data_on_uninstall'] = rest_sanitize_boolean( $input['delete_data_on_uninstall'] );
+		if ( $form || isset( $input['delete_data_on_uninstall'] ) ) {
+			$clean['delete_data_on_uninstall'] = isset( $input['delete_data_on_uninstall'] ) && rest_sanitize_boolean( $input['delete_data_on_uninstall'] );
 			$changed                           = true;
 		}
 
 		self::handle_api_key( $input );
+		if ( $clean !== $old ) {
+			delete_transient( 'findable_dashboard' );
+		}
 		return apply_filters( 'findable_settings_sanitized', $clean, $changed );
 	}
 
@@ -185,7 +188,7 @@ class Settings {
 			return;
 		}
 		if ( isset( $input['findable_api_key'] ) ) {
-			$key = sanitize_text_field( wp_unslash( $input['findable_api_key'] ) );
+			$key = sanitize_text_field( $input['findable_api_key'] );
 			if ( '' !== $key ) {
 				update_option( 'findable_api_key', $key, false );
 			}

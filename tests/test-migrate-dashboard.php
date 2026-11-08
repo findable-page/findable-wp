@@ -67,6 +67,15 @@ class Test_Migrate extends Findable_TestCase {
 		}
 	}
 
+	public function test_migration_includes_post_types_excluded_from_search() {
+		register_post_type( 'findable_hidden', array( 'public' => true, 'exclude_from_search' => true ) );
+		$post_id = self::factory()->post->create( array( 'post_type' => 'findable_hidden', 'post_status' => 'publish' ) );
+		update_post_meta( $post_id, '_findable_scan', $this->legacy_scan() );
+		Migrate::maybe_migrate();
+		$this->assertNotNull( Store::get( $post_id ) );
+		unregister_post_type( 'findable_hidden' );
+	}
+
 	public function test_migration_is_idempotent() {
 		$post_id = $this->create_scannable_post();
 		update_post_meta( $post_id, '_findable_scan', $this->legacy_scan( array( 'overall' => 64 ) ) );
@@ -163,6 +172,14 @@ class Test_Dashboard_Aggregate extends Findable_TestCase {
 		$this->assertSame( 2, $agg['bands']['good'] );
 		$this->assertSame( 2, $agg['bands']['needs_work'] );
 		$this->assertSame( 2, $agg['bands']['poor'] );
+	}
+
+	public function test_zero_failing_checks_is_integer_in_weakest_rows() {
+		$post_id = $this->create_scannable_post();
+		$result = $this->save_result( $post_id, 100 );
+		$result['failing'] = 0;
+		update_post_meta( $post_id, '_findable_result', $result );
+		$this->assertSame( 0, Store::aggregate( true )['weakest'][0]['failing'] );
 	}
 
 	public function test_weakest_posts_oldest_scan_first_on_tie() {

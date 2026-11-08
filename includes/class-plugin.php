@@ -43,15 +43,15 @@ class Plugin {
 		}
 		self::$booted = true;
 
-		add_action( 'init', array( Store::class, 'register_meta' ) );
+		add_action( 'init', array( Store::class, 'register_meta' ), 99 );
 		add_action( 'rest_api_init', array( Rest::class, 'register_routes' ) );
 
 		if ( is_admin() ) {
 			Admin::init();
-			add_action( 'init', array( Admin::class, 'add_list_columns' ) );
+			add_action( 'init', array( Admin::class, 'add_list_columns' ), 99 );
 		}
 
-		add_action( 'plugins_loaded', array( Migrate::class, 'maybe_migrate' ) );
+		add_action( 'admin_init', array( Migrate::class, 'maybe_migrate' ) );
 
 		// Cron.
 		add_action( Bulk_Scan::TICK, array( Bulk_Scan::class, 'tick' ) );

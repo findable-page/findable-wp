@@ -25,6 +25,7 @@ class Test_Api_Client extends Findable_TestCase {
 		$this->assertSame( 'https://findable.page/api/scan', $calls[0]['url'] );
 		$this->assertSame( '{"url":"https:\/\/example.com\/hello\/"}', $calls[0]['args']['body'] );
 		$this->assertSame( 'application/json', $calls[0]['args']['headers']['Content-Type'] );
+		$this->assertSame( 'https://example.com/hello/', $result['url'] );
 	}
 
 	public function test_scan_body_trims_keyphrase() {
@@ -53,6 +54,7 @@ class Test_Api_Client extends Findable_TestCase {
 
 		$this->assertSame( 30, $calls[0]['args']['timeout'] );
 		$this->assertSame( 0, $calls[0]['args']['redirection'] );
+		$this->assertTrue( $calls[0]['args']['reject_unsafe_urls'] );
 		$this->assertSame( MB_IN_BYTES, $calls[0]['args']['limit_response_size'] );
 		$this->assertSame( 'Findable-WP/1.0.0; ' . home_url(), $calls[0]['args']['user-agent'] );
 	}

@@ -42,7 +42,7 @@ class Migrate {
 	public static function run_batch() {
 		$posts = get_posts(
 			array(
-				'post_type'        => 'any',
+				'post_type'        => array_values( get_post_types() ),
 				'post_status'      => 'any',
 				'posts_per_page'   => self::BATCH,
 				'fields'           => 'ids',

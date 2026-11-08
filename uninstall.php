@@ -23,6 +23,8 @@ if ( ! function_exists( 'findable_uninstall_site' ) ) {
 		delete_option( 'findable_bulk' );
 		delete_option( 'findable_db_version' );
 		delete_option( 'findable_bulk_consecutive' );
+		delete_option( 'findable_bulk_tick_lock' );
+		delete_metadata( 'user', 0, 'findable_fix_notice_dismissed', '', true );
 
 		// All findable_* transients.
 		global $wpdb;

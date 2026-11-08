@@ -9,11 +9,15 @@ export function band( score ) {
 	return score >= 50 ? 'needs_work' : 'poor';
 }
 
+import { __, _n, sprintf } from '@wordpress/i18n';
+
 export function bandLabel( score ) {
 	if ( score >= 80 ) {
-		return 'Good';
+		return __( 'Good', 'findable' );
 	}
-	return score >= 50 ? 'Needs work' : 'Poor';
+	return score >= 50
+		? __( 'Needs work', 'findable' )
+		: __( 'Poor', 'findable' );
 }
 
 /**
@@ -58,16 +62,28 @@ export function byFamily( checks ) {
 
 export function formatAge( seconds ) {
 	if ( seconds < 60 ) {
-		return 'just now';
+		return __( 'just now', 'findable' );
 	}
 	if ( seconds < 3600 ) {
 		const minutes = Math.round( seconds / 60 );
-		return minutes + ( minutes === 1 ? ' minute ago' : ' minutes ago' );
+		return sprintf(
+			/* translators: %s: minutes since scan. */
+			_n( '%s minute ago', '%s minutes ago', minutes, 'findable' ),
+			minutes
+		);
 	}
 	if ( seconds < 86400 ) {
 		const hours = Math.round( seconds / 3600 );
-		return hours + ( hours === 1 ? ' hour ago' : ' hours ago' );
+		return sprintf(
+			/* translators: %s: hours since scan. */
+			_n( '%s hour ago', '%s hours ago', hours, 'findable' ),
+			hours
+		);
 	}
 	const days = Math.round( seconds / 86400 );
-	return days + ( days === 1 ? ' day ago' : ' days ago' );
+	return sprintf(
+		/* translators: %s: days since scan. */
+		_n( '%s day ago', '%s days ago', days, 'findable' ),
+		days
+	);
 }

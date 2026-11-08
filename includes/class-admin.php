@@ -185,8 +185,8 @@ class Admin {
 		$locale    = get_user_locale();
 
 		wp_nonce_field( 'findable_scan_' . $post->ID, 'findable_scan_nonce' );
-		echo '<p>';
 		if ( null !== $result ) {
+			echo '<p>';
 			echo wp_kses_post( self::score_html( (int) $result['overall'] ) ) . ' ';
 			foreach ( array( 'seo', 'aeo', 'geo' ) as $family ) {
 				if ( isset( $result['families'][ $family ]['score'] ) ) {
@@ -206,7 +206,8 @@ class Admin {
 
 			if ( ! empty( $result['legacy'] ) ) {
 				echo '<p class="description">' . esc_html__( 'Imported from findable 0.2. Scan again to see the full breakdown.', 'findable' ) . '</p>';
-			} elseif ( ! empty( $result['checks'] ) ) {
+			}
+			if ( ! empty( $result['checks'] ) ) {
 				echo self::render_checks( $result, $locale ); // phpcs:ignore WordPress.Security.EscapeOutput -- every element escaped inside.
 			}
 		} else {
@@ -224,7 +225,8 @@ class Admin {
 			'<input type="text" class="widefat" id="findable-keyphrase" name="findable_keyphrase" value="%s" maxlength="100"></p>',
 			esc_attr( $keyphrase )
 		);
-		submit_button( __( 'Scan now', 'findable' ), 'secondary', 'findable_scan', false, array( 'type' => 'button' ) );
+		printf( '<button type="button" class="button button-secondary" id="findable_scan">%s</button>', esc_html__( 'Scan now', 'findable' ) );
+		printf( '<input type="hidden" name="findable_post_id" value="%d">', (int) $post->ID );
 		echo '<span class="spinner findable-scan-spinner" style="float:none"></span>';
 		echo '<p class="description">' . esc_html__( 'Findable scans the live URL, so publish or update first.', 'findable' ) . '</p>';
 	}
@@ -298,13 +300,14 @@ class Admin {
 
 		$scanned = Store::scan_post( $post_id, $keyphrase );
 
-		if ( is_wp_error( $scanned ) ) {
-			$redirect = add_query_arg( 'findable_scan_error', rawurlencode( $scanned->get_error_message() ), $redirect );
-		} elseif ( null !== $scanned['error'] ) {
-			$redirect = add_query_arg( 'findable_scan_error', rawurlencode( $scanned['error']['message'] ), $redirect );
+		if ( is_wp_error( $scanned ) || null !== $scanned['error'] ) {
+			$message = is_wp_error( $scanned ) ? $scanned->get_error_message() : $scanned['error']['message'];
+			set_transient( 'findable_scan_notice_' . get_current_user_id() . '_' . $post_id, $message, MINUTE_IN_SECONDS );
+			$redirect = add_query_arg( 'findable_scan_error', '1', $redirect );
 		} else {
 			$redirect = add_query_arg( 'findable_scan_done', '1', $redirect );
 		}
+		$redirect = add_query_arg( 'post', $post_id, $redirect );
 		wp_safe_redirect( $redirect );
 		exit;
 	}
@@ -320,9 +323,14 @@ class Admin {
 		if ( isset( $_GET['findable_scan_done'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only flag set by our own redirect.
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Findable scan complete.', 'findable' ) . '</p></div>';
 		}
-		if ( isset( $_GET['findable_scan_error'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- message escaped below.
-			$message = sanitize_text_field( wp_unslash( $_GET['findable_scan_error'] ) );
-			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
+		if ( isset( $_GET['findable_scan_error'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- flag only; message stored server-side.
+			$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only lookup.
+			$key     = 'findable_scan_notice_' . get_current_user_id() . '_' . $post_id;
+			$message = $post_id ? get_transient( $key ) : false;
+			if ( $message ) {
+				delete_transient( $key );
+				echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
+			}
 		}
 	}
 
@@ -410,29 +418,26 @@ class Admin {
 		}
 		$order = 'ASC' === strtoupper( (string) $query->get( 'order' ) ) ? 'ASC' : 'DESC';
 
-		// Include posts without a score via a NOT EXISTS branch.
-		$query->set(
-			'meta_query',
+		// Include posts without a score via a NOT EXISTS branch, preserving list filters.
+		$meta_query = (array) $query->get( 'meta_query' );
+		$meta_query['findable_score_cl'] = array(
+			'relation' => 'OR',
 			array(
-				'findable_score_cl' => array(
-					'relation' => 'OR',
-					array(
-						'key'     => '_findable_overall',
-						'compare' => 'EXISTS',
-					),
-					array(
-						'key'     => '_findable_overall',
-						'compare' => 'NOT EXISTS',
-					),
-				),
-			)
+				'key'     => '_findable_overall',
+				'compare' => 'EXISTS',
+			),
+			array(
+				'key'     => '_findable_overall',
+				'compare' => 'NOT EXISTS',
+			),
 		);
+		$query->set( 'meta_query', $meta_query );
 		$query->set( 'orderby', 'findable_score_cl' );
 		$query->set( 'order', $order );
 
 		$handler = static function ( $orderby_sql ) use ( $order, &$handler ) {
 			remove_filter( 'posts_orderby', $handler );
-			return 'ISNULL( mt1.meta_value ) ' . $order . ', CAST( mt1.meta_value AS SIGNED ) ' . $order;
+			return 'ISNULL( mt1.meta_value ) ASC, CAST( mt1.meta_value AS SIGNED ) ' . $order;
 		};
 		add_filter( 'posts_orderby', $handler );
 	}
@@ -455,16 +460,13 @@ class Admin {
 		if ( ! preg_match( Result::ID_PATTERN, $raw ) ) {
 			return; // Invalid value: ignore the filter.
 		}
-		$query->set(
-			'meta_query',
-			array(
-				array(
-					'key'     => '_findable_failing_ids',
-					'value'   => ',' . $raw . ',',
-					'compare' => 'LIKE',
-				),
-			)
+		$meta_query   = (array) $query->get( 'meta_query' );
+		$meta_query[] = array(
+			'key'     => '_findable_failing_ids',
+			'value'   => ',' . $raw . ',',
+			'compare' => 'LIKE',
 		);
+		$query->set( 'meta_query', $meta_query );
 	}
 
 	/**
@@ -507,7 +509,7 @@ class Admin {
 		if ( $can_manage && Migrate::has_legacy_fixes() && ! Migrate::fix_notice_dismissed() ) {
 			printf(
 				'<div class="notice notice-warning is-dismissible"><p>%1$s <a class="findable-dismiss" href="%2$s">%3$s</a></p></div>',
-				esc_html__( 'The old plugin\u2019s Fix All feature was removed in 1.0. Head tags it injected are no longer printed.', 'findable' ),
+				esc_html__( 'The old plugin’s Fix All feature was removed in 1.0. Head tags it injected are no longer printed.', 'findable' ),
 				esc_url( wp_nonce_url( add_query_arg( 'findable_dismiss_fix_notice', 1 ), 'findable_dismiss_fix_notice' ) ),
 				esc_html__( 'Dismiss', 'findable' )
 			);
@@ -516,7 +518,7 @@ class Admin {
 		if ( 0 === $agg['scanned'] ) {
 			echo '<p>' . esc_html__( 'No posts scanned yet.', 'findable' ) . '</p>';
 			if ( $can_manage ) {
-				echo '<button type="button" class="button button-primary" id="findable-bulk-start" data-force="false">' . esc_html__( 'Scan all posts', 'findable' ) . '</button>';
+				echo self::render_bulk_panel( $state ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
 			}
 			echo '</div>';
 			return;
@@ -552,7 +554,7 @@ class Admin {
 				'<td class="findable-band-%1$s"><span class="findable-band-bar" aria-hidden="true" style="width:%2$s%%"></span><span>%3$s</span></td>',
 				esc_attr( $key ),
 				esc_attr( $agg['scanned'] ? (int) round( 100 * $agg['bands'][ $key ] / $agg['scanned'] ) : 0 ),
-				esc_html( _n( '%s post', '%s posts', $agg['bands'][ $key ], 'findable' ) )
+				esc_html( sprintf( _n( '%s post', '%s posts', $agg['bands'][ $key ], 'findable' ), number_format_i18n( $agg['bands'][ $key ] ) ) )
 			);
 		}
 		echo '</tr></tbody></table>';
@@ -622,6 +624,10 @@ class Admin {
 		$out     = '<div id="findable-bulk-panel" class="findable-bulk card" data-status="' . esc_attr( $state['status'] ) . '" data-running="' . esc_attr( $running ? '1' : '0' ) . '">';
 		$out    .= '<h2>' . esc_html__( 'Bulk scan', 'findable' ) . '</h2>';
 		$out    .= '<p aria-live="polite" id="findable-bulk-status">' . esc_html( self::bulk_status_text( $state ) ) . '</p>';
+		if ( 'paused' === $state['status'] && '' !== (string) $state['last_error'] ) {
+			$out .= '<p class="findable-error">' . esc_html( (string) $state['last_error'] ) . ' <button type="button" class="button findable-bulk-resume">' . esc_html__( 'Resume', 'findable' ) . '</button></p>';
+		}
+		$out    .= '<p id="findable-bulk-eta">' . esc_html( self::bulk_eta_text( $state ) ) . '</p>';
 		$out    .= '<progress id="findable-bulk-progress" max="' . esc_attr( (string) $state['total'] ) . '" value="' . esc_attr( (string) ( $state['done'] + $state['failed'] ) ) . '"></progress> ';
 		$out    .= '<p>';
 		$out    .= '<button type="button" class="button button-primary" id="findable-bulk-start" data-force="false"' . ( $running ? ' disabled' : '' ) . '>' . esc_html__( 'Start bulk scan', 'findable' ) . '</button> ';
@@ -630,12 +636,25 @@ class Admin {
 		$out    .= '<button type="button" class="button" id="findable-bulk-resume"' . ( 'paused' === $state['status'] ? '' : ' disabled' ) . '>' . esc_html__( 'Resume', 'findable' ) . '</button> ';
 		$out    .= '<button type="button" class="button" id="findable-bulk-cancel"' . ( $running ? '' : ' disabled' ) . '>' . esc_html__( 'Cancel', 'findable' ) . '</button>';
 		$out    .= '</p>';
-		if ( '' !== (string) $state['last_error'] ) {
+		if ( 'paused' !== $state['status'] && '' !== (string) $state['last_error'] ) {
 			$out .= '<p class="findable-error">' . esc_html( (string) $state['last_error'] ) . '</p>';
 		}
 		$out .= '<p class="description">' . esc_html__( 'Bulk scans run slowly by design to respect the API rate limit of 10 scans per minute per IP.', 'findable' ) . '</p>';
 		$out .= '</div>';
 		return $out;
+	}
+
+	/**
+	 * Estimated time remaining at configured scan pace.
+	 *
+	 * @param array $state Bulk state.
+	 * @return string
+	 */
+	public static function bulk_eta_text( $state ) {
+		$remaining = max( 0, (int) $state['total'] - (int) $state['done'] - (int) $state['failed'] );
+		$minutes   = (int) ceil( $remaining / max( 1, (int) Settings::get( 'bulk_per_minute' ) ) );
+		/* translators: %s: estimated minutes remaining. */
+		return sprintf( _n( 'About %s minute remaining.', 'About %s minutes remaining.', $minutes, 'findable' ), number_format_i18n( $minutes ) );
 	}
 
 	/**
@@ -677,6 +696,7 @@ class Admin {
 			<?php settings_errors( 'findable_settings' ); ?>
 			<form action="options.php" method="post">
 				<?php settings_fields( 'findable_settings' ); ?>
+				<input type="hidden" name="findable_settings[_form]" value="1">
 				<?php do_settings_sections( 'findable-settings' ); ?>
 				<?php submit_button(); ?>
 			</form>

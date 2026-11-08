@@ -21,7 +21,7 @@ class Findable_TestCase extends WP_UnitTestCase {
 		$calls = array();
 		add_filter(
 			'pre_http_request',
-			function ( $preempt, $args, $url ) use ( $responses, &$calls ) {
+			function ( $preempt, $args, $url ) use ( &$responses, &$calls ) {
 				$calls[] = array(
 					'url'  => $url,
 					'args' => $args,

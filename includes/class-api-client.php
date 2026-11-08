@@ -76,7 +76,11 @@ class Api_Client {
 			return $response;
 		}
 
-		return Result::normalize( $response );
+		$result = Result::normalize( $response );
+		if ( ! is_wp_error( $result ) ) {
+			$result['url'] = esc_url_raw( $url );
+		}
+		return $result;
 	}
 
 	/**

@@ -8,3 +8,4 @@ build/
 *.zip
 composer.phar
 .wp-env
+coverage/

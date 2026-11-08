@@ -109,6 +109,20 @@ class Test_Settings extends Findable_TestCase {
 		$this->assertFalse( get_transient( 'findable_dashboard' ) );
 	}
 
+	public function test_form_submit_can_clear_all_checkboxes_and_post_types() {
+		update_option( 'findable_settings', array_merge( Settings::defaults(), array( 'scan_on_publish' => true, 'delete_data_on_uninstall' => true ) ), false );
+		$settings = Settings::sanitize( array( '_form' => '1' ) );
+		$this->assertFalse( $settings['scan_on_publish'] );
+		$this->assertFalse( $settings['delete_data_on_uninstall'] );
+		$this->assertSame( array(), $settings['post_types'] );
+	}
+
+	public function test_post_type_change_clears_dashboard_transient() {
+		set_transient( 'findable_dashboard', array( 'x' => 1 ) );
+		Settings::sanitize( array( '_form' => '1', 'post_types' => array( 'post' ) ) );
+		$this->assertFalse( get_transient( 'findable_dashboard' ) );
+	}
+
 	public function test_endpoint_port_unreachable_flag() {
 		update_option( 'findable_settings', array( 'endpoint' => 'https://findable.example.com:8443' ), false );
 		$this->assertTrue( Settings::endpoint_port_unreachable() );

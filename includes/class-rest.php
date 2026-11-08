@@ -42,7 +42,6 @@ class Rest {
 					'keyphrase' => array(
 						'type'              => 'string',
 						'required'          => false,
-						'default'           => '',
 						'sanitize_callback' => 'sanitize_text_field',
 						'validate_callback' => static function ( $value ) {
 							return is_string( $value ) && mb_strlen( $value ) <= Api_Client::MAX_KEYPHRASE;
@@ -171,7 +170,7 @@ class Rest {
 		// Reserve the lock before the API call so a second click cannot race through.
 		set_transient( $lock, 1, 10 );
 
-		$keyphrase = isset( $request['keyphrase'] ) ? (string) $request['keyphrase'] : null;
+		$keyphrase = $request->has_param( 'keyphrase' ) ? (string) $request['keyphrase'] : null;
 		$scanned   = Store::scan_post( $post_id, $keyphrase );
 
 		if ( is_wp_error( $scanned ) ) {
@@ -209,10 +208,14 @@ class Rest {
 	public static function result_payload( $post_id, $result, $error = null ) {
 		$post   = get_post( $post_id );
 		$advice = array();
+		$labels = array();
 		$fresh  = false;
 
 		if ( null !== $result ) {
 			$fresh = Store::is_fresh( $post_id, $result );
+			foreach ( (array) $result['checks'] as $check ) {
+				$labels[ $check['id'] ] = Fix_Advice::label( $check, get_user_locale() );
+			}
 			foreach ( Result::failing( $result ) as $check ) {
 				$advice[ $check['id'] ] = Fix_Advice::for_check( $check['id'], get_user_locale() );
 			}
@@ -227,6 +230,7 @@ class Rest {
 			'reason'      => Store::scan_reason( $post ),
 			'report_url'  => null !== $result ? Store::report_url( $result['url'] ) : Store::report_url( (string) get_permalink( $post ) ),
 			'advice'      => $advice,
+			'labels'      => $labels,
 			'keyphrase'   => (string) get_post_meta( $post_id, '_findable_keyphrase', true ),
 			'legacy'      => null !== $result && ! empty( $result['legacy'] ),
 		);
@@ -238,7 +242,10 @@ class Rest {
 	 * @return \WP_REST_Response
 	 */
 	public static function handle_bulk_get() {
-		return rest_ensure_response( Bulk_Scan::state() );
+		$state                = Bulk_Scan::state();
+		$state['status_text'] = Admin::bulk_status_text( $state );
+		$state['eta_text']    = Admin::bulk_eta_text( $state );
+		return rest_ensure_response( $state );
 	}
 
 	/**

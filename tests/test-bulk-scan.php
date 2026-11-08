@@ -45,6 +45,17 @@ class Test_Bulk_Scan extends Findable_TestCase {
 		$this->assertLessThanOrEqual( time() + 5, $next );
 	}
 
+	public function test_start_and_resume_reset_consecutive_failures() {
+		$this->create_scannable_post();
+		update_option( 'findable_bulk_consecutive', 4, false );
+		Bulk_Scan::start();
+		$this->assertFalse( get_option( 'findable_bulk_consecutive' ) );
+		Bulk_Scan::pause();
+		update_option( 'findable_bulk_consecutive', 4, false );
+		Bulk_Scan::resume();
+		$this->assertFalse( get_option( 'findable_bulk_consecutive' ) );
+	}
+
 	public function test_start_while_running_is_409() {
 		Bulk_Scan::start( false );
 		$error = Bulk_Scan::start( false );

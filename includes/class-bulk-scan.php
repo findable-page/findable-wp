@@ -134,6 +134,7 @@ class Bulk_Scan {
 			)
 		);
 		self::save_state( $state );
+		delete_option( 'findable_bulk_consecutive' );
 		self::schedule_next_tick( time() + 5 );
 		return self::state();
 	}
@@ -161,6 +162,7 @@ class Bulk_Scan {
 	public static function resume() {
 		$state = self::state();
 		if ( 'paused' === $state['status'] ) {
+			delete_option( 'findable_bulk_consecutive' );
 			$state['status'] = 'running';
 			self::save_state( $state );
 			self::schedule_next_tick( time() + 5 );
@@ -313,7 +315,9 @@ class Bulk_Scan {
 	 * @param int $post_id Post id.
 	 */
 	public static function scan_post_event( $post_id ) {
-		Store::scan_post( (int) $post_id );
+		if ( Settings::get( 'scan_on_publish' ) ) {
+			Store::scan_post( (int) $post_id );
+		}
 	}
 
 	/**

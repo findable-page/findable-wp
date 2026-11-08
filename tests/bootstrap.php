@@ -16,14 +16,14 @@ require_once $_tests_dir . '/includes/functions.php';
 
 // Unstubbed-HTTP guard: a request answered by a test stub (priority below
 // 999, returning non-false) passes through; anything unstubbed returns an
-// error instead of reaching the network.
+// exception instead of reaching the network.
 tests_add_filter(
 	'pre_http_request',
 	function ( $preempt, $args, $url ) {
 		if ( false !== $preempt ) {
 			return $preempt;
 		}
-		return new WP_Error( 'findable_unstubbed_http', 'Unstubbed HTTP request: ' . $url );
+		throw new Exception( 'Unstubbed HTTP request: ' . $url );
 	},
 	999,
 	3

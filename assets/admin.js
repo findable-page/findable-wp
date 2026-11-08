@@ -1,6 +1,6 @@
 /**
  * Findable admin JS: connection test, bulk panel polling, classic meta box scan.
- * Plain ES5; no build step needed.
+ * No build step needed.
  */
 ( function () {
 	'use strict';
@@ -112,9 +112,13 @@
 				const progress = document.getElementById(
 					'findable-bulk-progress'
 				);
+				const eta = document.getElementById( 'findable-bulk-eta' );
 				const done = ( state.done || 0 ) + ( state.failed || 0 );
 				if ( statusEl ) {
-					statusEl.textContent = describe( state );
+					statusEl.textContent = state.status_text || strings.error;
+				}
+				if ( eta ) {
+					eta.textContent = state.eta_text || '';
 				}
 				if ( progress ) {
 					progress.max = state.total || 1;
@@ -137,37 +141,13 @@
 				if ( resume ) {
 					resume.disabled = state.status !== 'paused';
 				}
+				panel.setAttribute( 'data-running', running ? '1' : '0' );
 				if ( running ) {
 					schedulePoll();
 				} else {
 					stopPoll();
 				}
 			} );
-		}
-
-		function describe( state ) {
-			const done = ( state.done || 0 ) + ( state.failed || 0 );
-			const total = state.total || 0;
-			switch ( state.status ) {
-				case 'running':
-					return done + ' / ' + total;
-				case 'paused':
-					return done + ' / ' + total + ' (' + strings.paused + ')';
-				case 'done':
-					return (
-						state.done +
-						' ' +
-						strings.scanned +
-						', ' +
-						state.failed +
-						' ' +
-						strings.failed
-					);
-				case 'cancelled':
-					return strings.cancelled;
-				default:
-					return strings.idle;
-			}
 		}
 
 		function schedulePoll() {
@@ -216,6 +196,13 @@
 		bind( 'findable-bulk-resume', function () {
 			action( 'POST', { action: 'resume' } );
 		} );
+		document
+			.querySelectorAll( '.findable-bulk-resume' )
+			.forEach( function ( button ) {
+				button.addEventListener( 'click', function () {
+					action( 'POST', { action: 'resume' } );
+				} );
+			} );
 		bind( 'findable-bulk-cancel', function () {
 			// Deliberate blocking confirm before cancelling a run.
 			/* eslint-disable no-alert */
@@ -236,7 +223,7 @@
 				? box.querySelector( 'input[name="findable_scan_nonce"]' )
 				: null;
 			const postId = box
-				? box.querySelector( 'input[name="post_ID"]' )
+				? box.querySelector( 'input[name="findable_post_id"]' )
 				: null;
 			if ( ! nonce || ! postId ) {
 				return;

@@ -74,6 +74,7 @@ class Test_Rest extends Findable_TestCase {
 		);
 
 		wp_set_current_user( self::factory()->user->create( array( 'role' => $role ) ) );
+		$this->stub_http( $this->http_response( 200, wp_json_encode( $this->scan_response() ) ) );
 
 		// Scan the author's post: only users who can edit that post pass.
 		$response = $this->dispatch( 'POST', "/findable/v1/posts/{$post_id}/scan" );
@@ -121,6 +122,16 @@ class Test_Rest extends Findable_TestCase {
 		$this->assertSame( 'grinder', $data['keyphrase'] );
 		$this->assertSame( 72, (int) get_post_meta( $post_id, '_findable_overall', true ) );
 		$this->assertGreaterThan( 0, (int) get_post_meta( $post_id, '_findable_scanned_at', true ) );
+	}
+
+	public function test_scan_without_keyphrase_preserves_saved_value() {
+		$post_id = $this->create_scannable_post();
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		update_post_meta( $post_id, '_findable_keyphrase', 'saved' );
+		$this->stub_http( $this->http_response( 200, wp_json_encode( $this->scan_response() ) ), $calls );
+		$this->assertSame( 200, $this->dispatch( 'POST', "/findable/v1/posts/{$post_id}/scan" )->get_status() );
+		$this->assertSame( 'saved', get_post_meta( $post_id, '_findable_keyphrase', true ) );
+		$this->assertSame( 'saved', json_decode( $calls[0]['args']['body'], true )['keyphrase'] );
 	}
 
 	public function test_double_click_returns_too_soon() {
@@ -195,6 +206,7 @@ class Test_Rest extends Findable_TestCase {
 		$this->assertArrayHasKey( 'title_length', $data['advice'] );
 		$this->assertSame( 'Keep the title between 30 and 60 characters so search engines do not truncate it.', $data['advice']['title_length'] );
 		$this->assertSame( 'https://findable.page/example.com/hello', $data['report_url'] );
+		$this->assertSame( 'Check title_length', $data['labels']['title_length'] );
 	}
 
 	public function test_connection_route_reports_health() {

@@ -45,7 +45,7 @@ function FamilyScore( { name, family } ) {
 	);
 }
 
-function ChecksList( { checks, advice } ) {
+function ChecksList( { checks, advice, labels } ) {
 	const families = byFamily( checks );
 	return [ 'seo', 'aeo', 'geo' ].map( ( key ) =>
 		families[ key ].length ? (
@@ -58,7 +58,8 @@ function ChecksList( { checks, advice } ) {
 							className={ 'findable-check-' + check.s }
 						>
 							<span className="findable-check-label">
-								{ check.label }
+								{ ( labels && labels[ check.id ] ) ||
+									check.label }
 							</span>
 							{ check.s === 'fail' &&
 							advice &&
@@ -99,16 +100,16 @@ function FindableSidebar() {
 				path: `/findable/v1/posts/${ editor.postId }/result`,
 			} );
 			setPayload( data );
-			if ( null === keyphraseDraft ) {
-				setKeyphraseDraft( data.keyphrase || '' );
-			}
+			setKeyphraseDraft( ( previous ) =>
+				previous === null ? data.keyphrase || '' : previous
+			);
 		} catch ( error ) {
 			setNotice( {
 				status: 'error',
 				message: error.message || __( 'Request failed.', 'findable' ),
 			} );
 		}
-	}, [ editor.postId, keyphraseDraft ] );
+	}, [ editor.postId ] );
 
 	useEffect( () => {
 		if ( editor.postId ) {
@@ -249,7 +250,7 @@ function FindableSidebar() {
 											: sprintf(
 													/* translators: %s: human-readable age */
 													__(
-														'Stale: post changed since last scan (scanned %s)',
+														'Stale: scan again to refresh (scanned %s)',
 														'findable'
 													),
 													formatAge(
@@ -279,7 +280,8 @@ function FindableSidebar() {
 										'findable'
 									) }
 								</p>
-							) : (
+							) : null }
+							{ ( ! result.legacy || c.failing > 0 ) && (
 								<PanelBody
 									title={ __( 'Checks', 'findable' ) }
 									initialOpen
@@ -342,6 +344,7 @@ function FindableSidebar() {
 											filter
 										) }
 										advice={ payload.advice }
+										labels={ payload.labels }
 									/>
 								</PanelBody>
 							) }

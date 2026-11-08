@@ -19,14 +19,14 @@ class Store {
 	 */
 	public static function register_meta() {
 		$args_map = array(
-			'_findable_result' => array( 'type' => 'array' ),
-			'_findable_overall' => array( 'type' => 'integer' ),
-			'_findable_scanned_at' => array( 'type' => 'integer' ),
+			'_findable_result'      => array( 'type' => 'array' ),
+			'_findable_overall'     => array( 'type' => 'integer' ),
+			'_findable_scanned_at'  => array( 'type' => 'integer' ),
 			'_findable_keyphrase'   => array(
 				'type'    => 'string',
 				'default' => '',
 			),
-			'_findable_error' => array( 'type' => 'array' ),
+			'_findable_error'       => array( 'type' => 'array' ),
 			'_findable_failing_ids' => array(
 				'type'    => 'string',
 				'default' => '',
@@ -217,10 +217,9 @@ class Store {
 	 */
 	public static function scan_post( $post_id, $keyphrase = null ) {
 		if ( ! self::is_scannable( $post_id ) ) {
-			return new \WP_Error(
-				'findable_not_scannable',
-				self::reason_message( self::scan_reason( $post_id ) )
-			);
+			$error = new \WP_Error( 'findable_not_scannable', self::reason_message( self::scan_reason( $post_id ) ) );
+			self::save_error( $post_id, $error );
+			return $error;
 		}
 
 		if ( null !== $keyphrase ) {
@@ -297,7 +296,10 @@ class Store {
 	 */
 	public static function scannable_ids_after( $cursor, $limit ) {
 		global $wpdb;
-		$types  = Settings::get( 'post_types' );
+		$types = Settings::get( 'post_types' );
+		if ( ! $types ) {
+			return array();
+		}
 		$format = 'SELECT ID FROM ' . $wpdb->posts . ' WHERE post_type IN (' . implode( ',', array_fill( 0, count( $types ), '%s' ) ) . ") AND post_status = 'publish' AND post_password = '' AND ID > %d ORDER BY ID ASC LIMIT %d";
 		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- $format is a prepared statement with dynamic IN placeholders; values all pass through prepare() below.
 		$sql = $wpdb->prepare( $format, array_merge( $types, array( (int) $cursor, (int) $limit ) ) );
@@ -312,7 +314,10 @@ class Store {
 	 */
 	public static function count_scannable() {
 		global $wpdb;
-		$types  = Settings::get( 'post_types' );
+		$types = Settings::get( 'post_types' );
+		if ( ! $types ) {
+			return 0;
+		}
 		$format = 'SELECT COUNT( ID ) FROM ' . $wpdb->posts . ' WHERE post_type IN (' . implode( ',', array_fill( 0, count( $types ), '%s' ) ) . ") AND post_status = 'publish' AND post_password = ''";
 		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- $format is a prepared statement with dynamic IN placeholders; values all pass through prepare() below.
 		$sql = $wpdb->prepare( $format, $types );
@@ -371,7 +376,8 @@ class Store {
 			$batch = get_posts(
 				array(
 					'post_type'        => $types,
-					'post_status'      => 'any',
+					'post_status'      => 'publish',
+					'has_password'     => false,
 					'posts_per_page'   => $per_page,
 					'offset'           => $offset,
 					'fields'           => 'ids',
@@ -407,7 +413,7 @@ class Store {
 					'id'      => (int) $post_id,
 					'score'   => $overall,
 					'at'      => isset( $result['scanned_at'] ) ? (int) $result['scanned_at'] : 0,
-					'failing' => empty( $result['failing'] ) ? Result::failing( $result ) : (int) $result['failing'],
+					'failing' => (int) ( $result['failing'] ?? count( Result::failing( $result ) ) ),
 				);
 
 				foreach ( Result::failing( $result ) as $check ) {
