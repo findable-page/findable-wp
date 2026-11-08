@@ -42,13 +42,12 @@ class Migrate {
 	public static function run_batch() {
 		$posts = get_posts(
 			array(
-				'post_type'        => array_values( get_post_types() ),
-				'post_status'      => 'any',
-				'posts_per_page'   => self::BATCH,
-				'fields'           => 'ids',
-				'meta_key'         => '_findable_scan', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				'meta_compare'     => 'EXISTS',
-				'suppress_filters' => true,
+				'post_type'      => array_values( get_post_types() ),
+				'post_status'    => 'any',
+				'posts_per_page' => self::BATCH,
+				'fields'         => 'ids',
+				'meta_key'       => '_findable_scan', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_compare'   => 'EXISTS',
 			)
 		);
 
@@ -132,13 +131,12 @@ class Migrate {
 	public static function has_legacy_fixes() {
 		$found = get_posts(
 			array(
-				'post_type'        => 'any',
-				'post_status'      => 'any',
-				'posts_per_page'   => 1,
-				'fields'           => 'ids',
-				'meta_key'         => '_findable_fixes', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				'meta_compare'     => 'EXISTS',
-				'suppress_filters' => true,
+				'post_type'      => 'any',
+				'post_status'    => 'any',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'meta_key'       => '_findable_fixes', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_compare'   => 'EXISTS',
 			)
 		);
 		return ! empty( $found );

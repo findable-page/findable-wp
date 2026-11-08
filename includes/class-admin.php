@@ -548,6 +548,7 @@ class Admin {
 				'<td class="findable-band-%1$s"><span class="findable-band-bar" aria-hidden="true" style="width:%2$s%%"></span><span>%3$s</span></td>',
 				esc_attr( $key ),
 				esc_attr( $agg['scanned'] ? (int) round( 100 * $agg['bands'][ $key ] / $agg['scanned'] ) : 0 ),
+				/* translators: %s: number of posts. */
 				esc_html( sprintf( _n( '%s post', '%s posts', $agg['bands'][ $key ], 'findable' ), number_format_i18n( $agg['bands'][ $key ] ) ) )
 			);
 		}
@@ -593,6 +594,7 @@ class Admin {
 				'<td><a href="%1$s">%2$s</a> <span class="findable-pct">%3$s</span></td>',
 				esc_url( $filter ),
 				esc_html( number_format_i18n( $row['posts'] ) ),
+				/* translators: %s: percentage of scanned posts. */
 				esc_html( sprintf( __( '%s%% of scanned posts', 'findable' ), number_format_i18n( $agg['scanned'] ? (int) round( 100 * $row['posts'] / $agg['scanned'] ) : 0 ) ) )
 			);
 			printf( '<td>%s</td>', esc_html( Fix_Advice::for_check( $row['id'], $locale ) ) );

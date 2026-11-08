@@ -302,8 +302,7 @@ class Store {
 		}
 		$format = 'SELECT ID FROM ' . $wpdb->posts . ' WHERE post_type IN (' . implode( ',', array_fill( 0, count( $types ), '%s' ) ) . ") AND post_status = 'publish' AND post_password = '' AND ID > %d ORDER BY ID ASC LIMIT %d";
 		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery -- $format is a prepared statement with dynamic IN placeholders; values all pass through prepare() below. WP_Query cannot express ID > cursor, and bulk scans must see live data, so no cache.
-		$sql = $wpdb->prepare( $format, array_merge( $types, array( (int) $cursor, (int) $limit ) ) );
-		return array_map( 'intval', $wpdb->get_col( $sql ) );
+		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( $format, array_merge( $types, array( (int) $cursor, (int) $limit ) ) ) ) );
 		// phpcs:enable
 	}
 
@@ -320,8 +319,7 @@ class Store {
 		}
 		$format = 'SELECT COUNT( ID ) FROM ' . $wpdb->posts . ' WHERE post_type IN (' . implode( ',', array_fill( 0, count( $types ), '%s' ) ) . ") AND post_status = 'publish' AND post_password = ''";
 		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery -- $format is a prepared statement with dynamic IN placeholders; values all pass through prepare() below. WP_Query cannot express ID > cursor, and bulk scans must see live data, so no cache.
-		$sql = $wpdb->prepare( $format, $types );
-		return (int) $wpdb->get_var( $sql );
+		return (int) $wpdb->get_var( $wpdb->prepare( $format, $types ) );
 		// phpcs:enable
 	}
 
@@ -375,15 +373,14 @@ class Store {
 		while ( true ) {
 			$batch = get_posts(
 				array(
-					'post_type'        => $types,
-					'post_status'      => 'publish',
-					'has_password'     => false,
-					'posts_per_page'   => $per_page,
-					'offset'           => $offset,
-					'fields'           => 'ids',
-					'meta_key'         => '_findable_result', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-					'suppress_filters' => true,
-					'orderby'          => 'none',
+					'post_type'      => $types,
+					'post_status'    => 'publish',
+					'has_password'   => false,
+					'posts_per_page' => $per_page,
+					'offset'         => $offset,
+					'fields'         => 'ids',
+					'meta_key'       => '_findable_result', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+					'orderby'        => 'none',
 				)
 			);
 			if ( empty( $batch ) ) {
