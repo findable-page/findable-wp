@@ -43,6 +43,7 @@
 }
 
 .findable-advice {
+	display: block;
 	font-size: 12px;
 	opacity: 0.9;
 }
