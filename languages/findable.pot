@@ -1,0 +1,599 @@
+# Copyright (C) 2026 Findable
+# This file is distributed under the GPLv2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Findable 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/findable-wp\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-11-07T11:33:50+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: findable\n"
+
+#. Plugin Name of the plugin
+#. Author of the plugin
+#: findable.php
+#: includes/class-admin.php:37
+#: includes/class-admin.php:38
+#: includes/class-admin.php:169
+#: includes/class-admin.php:362
+#: includes/class-admin.php:503
+#: includes/class-plugin.php:99
+#: src/editor/index.js:160
+#: src/editor/index.js:164
+msgid "Findable"
+msgstr ""
+
+#. Plugin URI of the plugin
+#. Author URI of the plugin
+#: findable.php
+msgid "https://findable.page"
+msgstr ""
+
+#. Description of the plugin
+#: findable.php
+msgid "Score posts and pages for SEO, AEO and GEO findability with the Findable API and see what to fix."
+msgstr ""
+
+#: includes/class-admin.php:46
+#: includes/class-admin.php:47
+msgid "Dashboard"
+msgstr ""
+
+#: includes/class-admin.php:54
+#: includes/class-admin.php:674
+msgid "Findable Settings"
+msgstr ""
+
+#: includes/class-admin.php:55
+msgid "Settings"
+msgstr ""
+
+#: includes/class-admin.php:99
+#: includes/class-admin.php:684
+msgid "Test connection"
+msgstr ""
+
+#: includes/class-admin.php:100
+msgid "Testing…"
+msgstr ""
+
+#: includes/class-admin.php:101
+#: includes/class-admin.php:626
+msgid "Start bulk scan"
+msgstr ""
+
+#: includes/class-admin.php:102
+#: includes/class-admin.php:627
+msgid "Rescan all posts"
+msgstr ""
+
+#: includes/class-admin.php:103
+#: includes/class-admin.php:628
+msgid "Pause"
+msgstr ""
+
+#: includes/class-admin.php:104
+#: includes/class-admin.php:629
+msgid "Resume"
+msgstr ""
+
+#: includes/class-admin.php:105
+#: includes/class-admin.php:630
+msgid "Cancel"
+msgstr ""
+
+#: includes/class-admin.php:106
+msgid "Cancel the bulk scan?"
+msgstr ""
+
+#: includes/class-admin.php:107
+#: src/editor/index.js:108
+#: src/editor/index.js:143
+msgid "Request failed."
+msgstr ""
+
+#: includes/class-admin.php:108
+msgid "paused"
+msgstr ""
+
+#: includes/class-admin.php:109
+msgid "scanned"
+msgstr ""
+
+#: includes/class-admin.php:110
+msgid "failed"
+msgstr ""
+
+#: includes/class-admin.php:111
+msgid "cancelled"
+msgstr ""
+
+#: includes/class-admin.php:112
+msgid "idle"
+msgstr ""
+
+#: includes/class-admin.php:144
+#: src/editor/index.js:369
+msgid "Scanning…"
+msgstr ""
+
+#: includes/class-admin.php:200
+#: includes/class-admin.php:394
+msgid "(stale)"
+msgstr ""
+
+#. translators: %s: human-readable time difference.
+#: includes/class-admin.php:203
+#, php-format
+msgid "Scanned %s ago."
+msgstr ""
+
+#: includes/class-admin.php:204
+#: src/editor/index.js:267
+msgid "Full report on findable.page"
+msgstr ""
+
+#: includes/class-admin.php:207
+#: src/editor/index.js:277
+msgid "Imported from findable 0.2. Scan again to see the full breakdown."
+msgstr ""
+
+#: includes/class-admin.php:212
+#: src/editor/index.js:350
+msgid "Not scanned yet."
+msgstr ""
+
+#: includes/class-admin.php:221
+#: src/editor/index.js:354
+msgid "Keyphrase (optional)"
+msgstr ""
+
+#: includes/class-admin.php:226
+#: src/editor/index.js:370
+msgid "Scan now"
+msgstr ""
+
+#: includes/class-admin.php:228
+msgid "Findable scans the live URL, so publish or update first."
+msgstr ""
+
+#. translators: %s: number of failing checks.
+#: includes/class-admin.php:252
+#, php-format
+msgid "Failing checks (%s)"
+msgstr ""
+
+#: includes/class-admin.php:258
+msgid "No failing checks. Nice!"
+msgstr ""
+
+#. translators: %s: number of passing checks.
+#: includes/class-admin.php:264
+#, php-format
+msgid "Passing checks (%s)"
+msgstr ""
+
+#: includes/class-admin.php:279
+msgid "Invalid request."
+msgstr ""
+
+#: includes/class-admin.php:284
+#: includes/class-rest.php:137
+msgid "Sorry, you are not allowed to scan this post."
+msgstr ""
+
+#: includes/class-admin.php:320
+msgid "Findable scan complete."
+msgstr ""
+
+#: includes/class-admin.php:389
+msgid "Not scanned"
+msgstr ""
+
+#. translators: %s: link to WordPress documentation about wp-cron.
+#: includes/class-admin.php:482
+#, php-format
+msgid "WP-Cron is disabled. Bulk scans run only when a server cron calls wp-cron.php. %s"
+msgstr ""
+
+#: includes/class-admin.php:483
+msgid "Learn more"
+msgstr ""
+
+#: includes/class-admin.php:487
+msgid "WP-Cron looks stalled: a Findable bulk tick is overdue by more than 10 minutes."
+msgstr ""
+
+#: includes/class-admin.php:495
+#: includes/class-admin.php:670
+msgid "Sorry, you are not allowed to access this page."
+msgstr ""
+
+#: includes/class-admin.php:509
+msgid "The old plugin\\u2019s Fix All feature was removed in 1.0. Head tags it injected are no longer printed."
+msgstr ""
+
+#: includes/class-admin.php:511
+msgid "Dismiss"
+msgstr ""
+
+#: includes/class-admin.php:516
+msgid "No posts scanned yet."
+msgstr ""
+
+#: includes/class-admin.php:518
+msgid "Scan all posts"
+msgstr ""
+
+#: includes/class-admin.php:525
+msgid "Site summary"
+msgstr ""
+
+#. translators: 1: scanned count, 2: scannable count, 3: stale count, 4: never scanned count.
+#: includes/class-admin.php:528
+#, php-format
+msgid "%1$s of %2$s scannable posts scanned (%3$s stale, %4$s never scanned)."
+msgstr ""
+
+#. translators: 1: average overall, 2: SEO average, 3: AEO average, 4: GEO average.
+#: includes/class-admin.php:536
+#, php-format
+msgid "Average scores — Overall %1$s, SEO %2$s, AEO %3$s, GEO %4$s."
+msgstr ""
+
+#: includes/class-admin.php:544
+msgid "Score distribution"
+msgstr ""
+
+#: includes/class-admin.php:545
+msgid "Good (80-100)"
+msgstr ""
+
+#: includes/class-admin.php:545
+msgid "Needs work (50-79)"
+msgstr ""
+
+#: includes/class-admin.php:545
+msgid "Poor (0-49)"
+msgstr ""
+
+#: includes/class-admin.php:554
+#, php-format
+msgid "%s post"
+msgid_plural "%s posts"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-admin.php:560
+msgid "Weakest posts"
+msgstr ""
+
+#: includes/class-admin.php:562
+msgid "Post"
+msgstr ""
+
+#: includes/class-admin.php:562
+msgid "Post type"
+msgstr ""
+
+#: includes/class-admin.php:562
+msgid "Overall score"
+msgstr ""
+
+#: includes/class-admin.php:562
+msgid "Failing checks"
+msgstr ""
+
+#: includes/class-admin.php:562
+msgid "Scan age"
+msgstr ""
+
+#. translators: %s: human-readable time difference.
+#: includes/class-admin.php:578
+#, php-format
+msgid "%s ago"
+msgstr ""
+
+#: includes/class-admin.php:584
+msgid "Most common failing checks"
+msgstr ""
+
+#: includes/class-admin.php:586
+msgid "Check"
+msgstr ""
+
+#: includes/class-admin.php:586
+msgid "Family"
+msgstr ""
+
+#: includes/class-admin.php:586
+msgid "Posts affected"
+msgstr ""
+
+#: includes/class-admin.php:586
+msgid "Fix advice"
+msgstr ""
+
+#: includes/class-admin.php:599
+#, php-format
+msgid "%s%% of scanned posts"
+msgstr ""
+
+#: includes/class-admin.php:622
+msgid "Bulk scan"
+msgstr ""
+
+#: includes/class-admin.php:635
+msgid "Bulk scans run slowly by design to respect the API rate limit of 10 scans per minute per IP."
+msgstr ""
+
+#. translators: 1: processed count, 2: total count.
+#: includes/class-admin.php:651
+#, php-format
+msgid "Running: %1$s of %2$s processed."
+msgstr ""
+
+#. translators: 1: processed count, 2: total count.
+#: includes/class-admin.php:654
+#, php-format
+msgid "Paused at %1$s of %2$s."
+msgstr ""
+
+#. translators: 1: scanned count, 2: failed count.
+#: includes/class-admin.php:657
+#, php-format
+msgid "Bulk scan finished: %1$s scanned, %2$s failed."
+msgstr ""
+
+#: includes/class-admin.php:659
+msgid "Bulk scan cancelled."
+msgstr ""
+
+#: includes/class-admin.php:661
+msgid "Idle."
+msgstr ""
+
+#: includes/class-admin.php:682
+msgid "Connection"
+msgstr ""
+
+#: includes/class-admin.php:697
+msgid "API and scanning"
+msgstr ""
+
+#: includes/class-admin.php:703
+msgid "Findable endpoint"
+msgstr ""
+
+#: includes/class-admin.php:704
+msgid "API key"
+msgstr ""
+
+#: includes/class-admin.php:705
+msgid "Post types"
+msgstr ""
+
+#: includes/class-admin.php:706
+msgid "Cache lifetime (days)"
+msgstr ""
+
+#: includes/class-admin.php:707
+msgid "Bulk scan pace (scans per minute)"
+msgstr ""
+
+#: includes/class-admin.php:708
+msgid "Scan on publish"
+msgstr ""
+
+#: includes/class-admin.php:709
+msgid "Delete data on uninstall"
+msgstr ""
+
+#: includes/class-admin.php:731
+msgid "The hosted API is https://findable.page. You can point this at a self-hosted findable server (findable -serve)."
+msgstr ""
+
+#: includes/class-admin.php:733
+msgid "Only ports 80, 443 and 8080 are reachable. For other ports define FINDABLE_ALLOW_PRIVATE_ENDPOINT (true) in wp-config.php."
+msgstr ""
+
+#: includes/class-admin.php:742
+msgid "Set in wp-config.php"
+msgstr ""
+
+#: includes/class-admin.php:747
+msgid "A key is saved."
+msgstr ""
+
+#: includes/class-admin.php:750
+msgid "Remove saved key"
+msgstr ""
+
+#: includes/class-admin.php:751
+msgid "Optional. The hosted findable.page API needs no key today; it is sent as a Bearer header for future compatibility. Leave empty to keep the saved key."
+msgstr ""
+
+#: includes/class-admin.php:781
+msgid "How long a stored scan result counts as fresh (1-90)."
+msgstr ""
+
+#: includes/class-admin.php:792
+msgid "API calls per minute during a bulk scan. The API allows 10 per minute per IP; stay under it."
+msgstr ""
+
+#: includes/class-admin.php:802
+msgid "Automatically rescan published posts about a minute after they are published or updated"
+msgstr ""
+
+#: includes/class-admin.php:813
+msgid "Delete all stored scan results and settings when the plugin is deleted"
+msgstr ""
+
+#: includes/class-api-client.php:58
+msgid "The keyphrase is too long. Use at most 100 characters."
+msgstr ""
+
+#: includes/class-api-client.php:94
+#: includes/class-api-client.php:120
+#: includes/class-api-client.php:178
+#: includes/class-api-client.php:209
+#: includes/class-result.php:43
+#: includes/class-result.php:47
+#: includes/class-result.php:59
+msgid "The Findable API returned an unexpected response."
+msgstr ""
+
+#: includes/class-api-client.php:189
+msgid "The Findable API is rate limiting this site (10 scans per minute). Try again shortly."
+msgstr ""
+
+#: includes/class-api-client.php:198
+msgid "The Findable API rejected the API key."
+msgstr ""
+
+#: includes/class-api-client.php:206
+msgid "The Findable API had a server error. Try again later."
+msgstr ""
+
+#: includes/class-bulk-scan.php:122
+msgid "A bulk scan is already in progress."
+msgstr ""
+
+#: includes/class-bulk-scan.php:277
+msgid "Bulk scan paused: the Findable API is not responding."
+msgstr ""
+
+#: includes/class-plugin.php:101
+msgid "When you scan a post, the Findable plugin sends the post’s public URL and an optional keyphrase to the configured Findable endpoint (by default https://findable.page). The endpoint fetches the public page to analyze it. Your site URL is included in the request User-Agent. If you set an API key it is sent as a request header. See the endpoint’s privacy policy: https://findable.page/privacy"
+msgstr ""
+
+#: includes/class-rest.php:149
+msgid "Sorry, you are not allowed to manage Findable."
+msgstr ""
+
+#: includes/class-rest.php:167
+msgid "This post was just scanned. Wait a few seconds and try again."
+msgstr ""
+
+#: includes/class-rest.php:267
+msgid "Unknown bulk action."
+msgstr ""
+
+#. translators: %s: error message.
+#: includes/class-rest.php:292
+#, php-format
+msgid "Could not reach the endpoint: %s"
+msgstr ""
+
+#. translators: 1: service name, 2: version number.
+#: includes/class-rest.php:302
+#, php-format
+msgid "Connected to %1$s %2$s."
+msgstr ""
+
+#: includes/class-result.php:167
+msgid "Good"
+msgstr ""
+
+#: includes/class-result.php:169
+msgid "Needs work"
+msgstr ""
+
+#: includes/class-result.php:171
+msgid "Poor"
+msgstr ""
+
+#: includes/class-settings.php:150
+#: includes/class-settings.php:155
+#: includes/class-settings.php:158
+#: includes/class-settings.php:169
+msgid "Enter an http or https URL."
+msgstr ""
+
+#: includes/class-settings.php:161
+msgid "Do not put credentials in the endpoint URL. Use the API key field."
+msgstr ""
+
+#: includes/class-settings.php:164
+msgid "The endpoint URL must not contain a query string or fragment."
+msgstr ""
+
+#: includes/class-store.php:265
+#: src/editor/index.js:169
+msgid "Publish this post first. Findable scans the live URL."
+msgstr ""
+
+#: includes/class-store.php:267
+msgid "This post is not publicly viewable. Findable scans the live URL."
+msgstr ""
+
+#: includes/class-store.php:269
+msgid "This post type is not enabled for Findable scans. Enable it in Findable Settings."
+msgstr ""
+
+#: includes/class-store.php:271
+msgid "This post cannot be scanned."
+msgstr ""
+
+#. translators: 1: family score, 2: passed checks, 3: total checks
+#: src/editor/index.js:39
+#, js-format
+msgid "%1$s (%2$s of %3$s passed)"
+msgstr ""
+
+#: src/editor/index.js:134
+msgid "Findable scan complete"
+msgstr ""
+
+#: src/editor/index.js:177
+msgid "Save or update the post to score your latest edits."
+msgstr ""
+
+#. translators: 1: score, 2: band label
+#: src/editor/index.js:213
+#, js-format
+msgid "%1$s %2$s"
+msgstr ""
+
+#. translators: %s: human-readable age
+#: src/editor/index.js:241
+#, js-format
+msgid "Scanned %s"
+msgstr ""
+
+#. translators: %s: human-readable age
+#: src/editor/index.js:251
+#, js-format
+msgid "Stale: post changed since last scan (scanned %s)"
+msgstr ""
+
+#: src/editor/index.js:284
+msgid "Checks"
+msgstr ""
+
+#. translators: %s: number of checks
+#: src/editor/index.js:296
+#, js-format
+msgid "Failing (%s)"
+msgstr ""
+
+#. translators: %s: number of checks
+#: src/editor/index.js:307
+#, js-format
+msgid "Passing (%s)"
+msgstr ""
+
+#. translators: %s: number of checks
+#: src/editor/index.js:318
+#, js-format
+msgid "Not applicable (%s)"
+msgstr ""
+
+#: src/editor/index.js:358
+msgid "Sent with the scan so the API can score keyphrase checks."
+msgstr ""

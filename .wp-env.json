@@ -1,0 +1,10 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/environment.json",
+	"core": "https://wordpress.org/wordpress-6.5.zip",
+	"plugins": [ "." ],
+	"config": {
+		"WP_TESTS_EMAIL": "admin@example.com",
+		"WP_TESTS_TITLE": "Findable Test",
+		"WP_PHP_BINARY": "php"
+	}
+}

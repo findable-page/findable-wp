@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify tag matches plugin version
+        run: |
+          VERSION=$(grep -oP '^ \* Version: \K.*' findable.php | head -1)
+          STABLE=$(sed -n 's/^Stable tag: *//p' readme.txt)
+          TAG="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION stable=$STABLE tag=$TAG"
+          [ "$VERSION" = "$STABLE" ] || { echo "findable.php Version != readme.txt Stable tag"; exit 1; }
+          [ "$VERSION" = "$TAG" ] || { echo "tag $TAG does not match plugin version $VERSION"; exit 1; }
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Build JS
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build zip
+        run: |
+          mkdir -p dist
+          zip -r dist/findable.zip . -x '*.git*' 'node_modules/*' 'vendor/*' 'tests/*' '.github/*' '.wordpress-org/*' 'openspec/*' 'bin/*' '*.map' '*.zip' 'dist/*' '.pi/*' 'phpcs.xml.dist' 'phpunit.xml.dist' 'composer.json' 'composer.lock' 'package-lock.json' '.eslintrc.json' '.editorconfig' '.distignore' '.wp-env.json' '.gitignore' > /dev/null
+          unzip -l dist/findable.zip | grep -q 'build/index.js' || { echo "zip missing build/index.js"; exit 1; }
+          unzip -l dist/findable.zip | grep -q 'build/index.asset.php' || { echo "zip missing build/index.asset.php"; exit 1; }
+          unzip -l dist/findable.zip | grep -q 'src/editor/index.js' || { echo "zip missing src/ sources"; exit 1; }
+          if unzip -l dist/findable.zip | grep -q 'node_modules'; then echo "zip must not contain node_modules"; exit 1; fi
+          if unzip -l dist/findable.zip | grep -q '\.map'; then echo "zip must not contain source maps"; exit 1; fi
+
+      - name: Attach to GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/findable.zip
+
+      - name: Deploy to WordPress.org
+        if: ${{ env.SVN_USERNAME != '' && env.SVN_PASSWORD != '' }}
+        uses: 10up/action-wordpress-plugin-deploy@stable
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SLUG: findable
+          BUILD_DIR: .
+          ASSETS_DIR: .wordpress-org

@@ -1,0 +1,8 @@
+vendor/
+node_modules/
+.phpunit.result.cache
+.phpunit.cache/
+dist/
+*.zip
+composer.phar
+.wp-env

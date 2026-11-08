@@ -1,0 +1,21 @@
+{
+	"name": "findable",
+	"version": "1.0.0",
+	"description": "Score posts and pages for SEO, AEO and GEO findability with the Findable API.",
+	"author": "Findable",
+	"license": "GPL-2.0-or-later",
+	"private": true,
+	"scripts": {
+		"build": "wp-scripts build src/editor/index.js --output-path=build",
+		"start": "wp-scripts start src/editor/index.js --output-path=build",
+		"lint:js": "wp-scripts lint-js src assets",
+		"lint:css": "stylelint assets/**/*.css",
+		"lint:pkg-json": "wp-scripts lint-pkg-json",
+		"test:unit": "wp-scripts test-unit-js",
+		"make-pot": "wp i18n make-pot . languages/findable.pot --exclude=vendor,node_modules,build,tests,bin,.github,.wordpress-org"
+	},
+	"devDependencies": {
+		"@wordpress/scripts": "^30.0.0",
+		"typescript": "~5.8.3"
+	}
+}

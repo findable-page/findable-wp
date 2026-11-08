@@ -1,0 +1,20 @@
++ install_wp
++ '[' -d /var/folders/mg/ksymrhlj5tdcyj3cjfghp8w80000gn/T/wordpress ']'
++ return
++ install_test_suite
++ '[' -d /var/folders/mg/ksymrhlj5tdcyj3cjfghp8w80000gn/T/wordpress-tests-lib ']'
++ return
++ install_db
++ '[' false = true ']'
++ php -r $'\n\t$pdo = new PDO( \'mysql:host=\' . getenv( \'DB_HOST\' ) . \';charset=utf8\', getenv( \'DB_USER\' ), getenv( \'DB_PASS\' ) );\n\t$pdo->exec( \'CREATE DATABASE IF NOT EXISTS \' . getenv( \'DB_NAME\' ) );\n\t'
+PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000] [1045] Access denied for user ''@'localhost' (using password: YES) in Command line code:2
+Stack trace:
+#0 Command line code(2): PDO->__construct('mysql:host=;cha...', '', Object(SensitiveParameterValue))
+#1 {main}
+  thrown in Command line code on line 2
+
+Fatal error: Uncaught PDOException: SQLSTATE[HY000] [1045] Access denied for user ''@'localhost' (using password: YES) in Command line code:2
+Stack trace:
+#0 Command line code(2): PDO->__construct('mysql:host=;cha...', '', Object(SensitiveParameterValue))
+#1 {main}
+  thrown in Command line code on line 2

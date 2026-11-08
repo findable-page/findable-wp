@@ -1,0 +1,29 @@
+{
+  "id": "bbe8c93c0",
+  "name": "Install Subversion dependency",
+  "command": "brew install subversion",
+  "description": "Local dependency for WordPress PHPUnit fixture installer",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1bab7-9737-754e-af41-1ebb237a1c8d-26535/bbe8c93c0.output",
+  "cwd": "/Users/nadimtuhin/code/findable-page/findable-wp",
+  "startTime": 1794134476697,
+  "endTime": 1794134486613,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 49079,
+  "bytesWritten": 889,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 600,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/zsh",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "posix"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "b9d934afa",
+  "name": "Research WordPress guidelines",
+  "command": "pwm ask -m sonar -s web 'For WordPress.org plugin submission, cite current official guidance on external service disclosure, Plugin Check, assets and license compatibility, and readme requirements. Brief answer with official URLs.'",
+  "description": "Requested WordPress.org guideline research through pwm",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1b5b7-1f65-7037-9d86-e876b93c6eeb-16417/b9d934afa.output",
+  "cwd": "/Users/nadimtuhin/code/findable-page/findable-wp",
+  "startTime": 1794050122677,
+  "endTime": 1794050131964,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 21516,
+  "bytesWritten": 5022,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1800,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/zsh",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "posix"
+  }
+}
