@@ -73,10 +73,11 @@ Version 1.0 is a rewrite: block editor sidebar, site dashboard, bulk scanning, t
 
 == Screenshots ==
 
-1. Findable sidebar in the block editor with scores and failing checks.
-2. The Findable dashboard with averages, bands and most common failing checks.
-3. Bulk scan panel with progress.
-4. Findable score column in the posts list.
+1. Settings page: Findable endpoint, optional API key, post types, cache lifetime, bulk pace and a connection test.
+2. Findable sidebar in the block editor: overall score, SEO/AEO/GEO breakdown and failing checks with fix advice.
+3. Site dashboard: averages, score bands, weakest posts and the most common failing checks.
+4. Bulk scan panel with progress, pause, resume and cancel.
+5. Sortable Findable score column in the posts list.
 
 == Changelog ==
 

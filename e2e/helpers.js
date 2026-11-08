@@ -112,6 +112,11 @@ async function prepareEditor( page ) {
 }
 
 async function openFindableSidebar( page ) {
+	const body = page.locator( '.findable-sidebar-body' );
+	// The editor remembers the open sidebar; clicking the toggle again would close it.
+	if ( await body.isVisible() ) {
+		return;
+	}
 	const toggle = page.getByRole( 'button', {
 		name: 'Findable',
 		exact: true,
