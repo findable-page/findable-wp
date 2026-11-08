@@ -2,7 +2,7 @@ const API = `http://127.0.0.1:${ process.env.E2E_API_PORT || 9501 }`;
 
 /**
  * Ensure the browser context is logged into WordPress admin.
- * @param {import('@playwright/test').Page} page Logged-in page.
+ * @param {import('@playwright/test').Page} page       Logged-in page.
  * @param {string}                          [username] Username.
  * @param {string}                          [password] Password.
  */
