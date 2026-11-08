@@ -120,9 +120,6 @@ class Api_Client {
 		if ( is_wp_error( $response ) ) {
 			return $response;
 		}
-		if ( ! is_array( $response ) ) {
-			return new \WP_Error( 'findable_bad_response', __( 'The Findable API returned an unexpected response.', 'findable' ) );
-		}
 
 		$map = array();
 		foreach ( $response as $id => $text ) {

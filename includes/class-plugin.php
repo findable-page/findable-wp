@@ -73,16 +73,10 @@ class Plugin {
 	 * @param \WP_Post $post       Post.
 	 */
 	public function on_transition_post_status( $new_status, $old_status, $post ) {
-		if ( ! $post instanceof \WP_Post ) {
-			return;
-		}
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+		if ( 'publish' !== $new_status || ! $post instanceof \WP_Post ) {
 			return;
 		}
 		if ( wp_is_post_revision( $post ) || wp_is_post_autosave( $post ) ) {
-			return;
-		}
-		if ( 'publish' !== $new_status ) {
 			return;
 		}
 		Bulk_Scan::schedule_scan_post( $post->ID );
@@ -92,9 +86,6 @@ class Plugin {
 	 * Suggested privacy policy content.
 	 */
 	public function privacy_policy() {
-		if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
-			return;
-		}
 		wp_add_privacy_policy_content(
 			__( 'Findable', 'findable' ),
 			'<p>' .

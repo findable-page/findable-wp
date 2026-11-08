@@ -119,14 +119,8 @@ class Admin {
 		// Block editor sidebar.
 		if ( $screen && in_array( $screen->base, array( 'post', 'post-new' ), true ) && self::uses_block_editor( $screen->post_type ) && in_array( $screen->post_type, Settings::get( 'post_types' ), true ) ) {
 			$asset = FINDABLE_DIR . 'build/index.asset.php';
-			$deps  = file_exists( $asset ) ? require $asset : array( 'dependencies' => array(), 'version' => FINDABLE_VERSION );
-			wp_enqueue_script(
-				'findable-editor',
-				plugins_url( 'build/index.js', FINDABLE_FILE ),
-				is_array( $deps ) && isset( $deps['dependencies'] ) ? $deps['dependencies'] : array(),
-				is_array( $deps ) && isset( $deps['version'] ) ? $deps['version'] : FINDABLE_VERSION,
-				true
-			);
+			$deps  = file_exists( $asset ) ? require $asset : array( 'dependencies' => array(), 'version' => FINDABLE_VERSION ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- one-liner fallback.
+			wp_enqueue_script( 'findable-editor', plugins_url( 'build/index.js', FINDABLE_FILE ), $deps['dependencies'], $deps['version'], true );
 			wp_set_script_translations( 'findable-editor', 'findable' );
 			wp_enqueue_style( 'findable-editor', plugins_url( 'assets/admin.css', FINDABLE_FILE ), array(), FINDABLE_VERSION );
 			wp_style_add_data( 'findable-editor', 'rtl', 'replace' );
@@ -291,7 +285,7 @@ class Admin {
 		if ( '' === $redirect ) {
 			$redirect = get_edit_post_link( $post_id, 'raw' );
 		}
-		if ( '' === $redirect || false === $redirect ) {
+		if ( ! $redirect ) {
 			$redirect = admin_url( 'edit.php' );
 		}
 
@@ -478,7 +472,7 @@ class Admin {
 		if ( ! Bulk_Scan::cron_unhealthy() ) {
 			return '';
 		}
-		if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) {
+		if ( Bulk_Scan::cron_disabled() ) {
 			return '<div class="notice notice-warning inline findable-cron-hint"><p>' .
 				sprintf(
 					/* translators: %s: link to WordPress documentation about wp-cron. */

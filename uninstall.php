@@ -30,7 +30,8 @@ if ( ! function_exists( 'findable_uninstall_site' ) ) {
 		global $wpdb;
 		$base_pattern    = $wpdb->esc_like( '_transient_findable_' ) . '%';
 		$timeout_pattern = $wpdb->esc_like( '_transient_timeout_findable_' ) . '%';
-		$transients      = $wpdb->get_col(
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- uninstall cleanup of our own prefixed transients; caching is irrelevant.
+		$transients = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
 				$base_pattern,
@@ -41,6 +42,7 @@ if ( ! function_exists( 'findable_uninstall_site' ) ) {
 			delete_transient( str_replace( '_transient_timeout_', '', str_replace( '_transient_', '', $name ) ) );
 		}
 		// Catch stragglers delete_transient cannot reach (timeouts without bases).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- uninstall cleanup of our own prefixed transients; caching is irrelevant.
 		$wpdb->query(
 			$wpdb->prepare(
 				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",

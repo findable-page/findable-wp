@@ -301,7 +301,7 @@ class Store {
 			return array();
 		}
 		$format = 'SELECT ID FROM ' . $wpdb->posts . ' WHERE post_type IN (' . implode( ',', array_fill( 0, count( $types ), '%s' ) ) . ") AND post_status = 'publish' AND post_password = '' AND ID > %d ORDER BY ID ASC LIMIT %d";
-		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- $format is a prepared statement with dynamic IN placeholders; values all pass through prepare() below.
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery -- $format is a prepared statement with dynamic IN placeholders; values all pass through prepare() below. WP_Query cannot express ID > cursor, and bulk scans must see live data, so no cache.
 		$sql = $wpdb->prepare( $format, array_merge( $types, array( (int) $cursor, (int) $limit ) ) );
 		return array_map( 'intval', $wpdb->get_col( $sql ) );
 		// phpcs:enable
@@ -319,7 +319,7 @@ class Store {
 			return 0;
 		}
 		$format = 'SELECT COUNT( ID ) FROM ' . $wpdb->posts . ' WHERE post_type IN (' . implode( ',', array_fill( 0, count( $types ), '%s' ) ) . ") AND post_status = 'publish' AND post_password = ''";
-		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- $format is a prepared statement with dynamic IN placeholders; values all pass through prepare() below.
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery -- $format is a prepared statement with dynamic IN placeholders; values all pass through prepare() below. WP_Query cannot express ID > cursor, and bulk scans must see live data, so no cache.
 		$sql = $wpdb->prepare( $format, $types );
 		return (int) $wpdb->get_var( $sql );
 		// phpcs:enable

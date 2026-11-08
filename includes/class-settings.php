@@ -168,7 +168,8 @@ class Settings {
 		}
 
 		$clean = esc_url_raw( $url, array( 'http', 'https' ) );
-		if ( '' === $clean ) {
+		$host  = wp_parse_url( $clean, PHP_URL_HOST );
+		if ( empty( $host ) ) {
 			return new \WP_Error( 'findable_endpoint', __( 'Enter an http or https URL.', 'findable' ) );
 		}
 		return $clean;

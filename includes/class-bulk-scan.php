@@ -340,18 +340,12 @@ class Bulk_Scan {
 	}
 
 	/**
-	 * Publish/update hook gate: skip autosaves and revisions.
+	 * Whether WP-Cron is disabled (constant), filterable for sites with a real system cron.
 	 *
-	 * @param int $post_id Post id.
+	 * @return bool
 	 */
-	public static function on_publish( $post_id ) {
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
-			return;
-		}
-		self::schedule_scan_post( $post_id );
+	public static function cron_disabled() {
+		return (bool) apply_filters( 'findable_cron_disabled', defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON );
 	}
 
 	/**
@@ -360,15 +354,12 @@ class Bulk_Scan {
 	 * @return bool
 	 */
 	public static function cron_unhealthy() {
-		if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) {
+		if ( self::cron_disabled() ) {
 			return true;
 		}
 		$next  = wp_next_scheduled( self::TICK );
 		$state = self::state();
-		if ( $next && 'running' === $state['status'] && ( $next + 10 * MINUTE_IN_SECONDS ) < time() ) {
-			return true;
-		}
-		return false;
+		return $next && 'running' === $state['status'] && ( $next + 10 * MINUTE_IN_SECONDS ) < time();
 	}
 
 	/**
@@ -377,14 +368,9 @@ class Bulk_Scan {
 	public static function deactivate() {
 		wp_clear_scheduled_hook( self::TICK );
 		// Remove all pending scan-on-publish events.
-		$crons = _get_cron_array();
-		if ( is_array( $crons ) ) {
-			foreach ( $crons as $timestamp => $hooks ) {
-				if ( isset( $hooks[ self::SCAN_POST ] ) ) {
-					foreach ( $hooks[ self::SCAN_POST ] as $key => $event ) {
-						wp_unschedule_event( $timestamp, self::SCAN_POST, isset( $event['args'] ) ? $event['args'] : array() );
-					}
-				}
+		foreach ( (array) _get_cron_array() as $timestamp => $hooks ) {
+			foreach ( isset( $hooks[ self::SCAN_POST ] ) ? $hooks[ self::SCAN_POST ] : array() as $event ) {
+				wp_unschedule_event( $timestamp, self::SCAN_POST, $event['args'] );
 			}
 		}
 
