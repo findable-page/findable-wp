@@ -1,7 +1,8 @@
 const { defineConfig } = require( '@playwright/test' );
 
-const WP_PORT = 9400;
-const API_PORT = 9501;
+// Overridable so two checkouts/sessions can run the suite side by side.
+const WP_PORT = Number( process.env.E2E_WP_PORT || 9400 );
+const API_PORT = Number( process.env.E2E_API_PORT || 9501 );
 
 module.exports = defineConfig( {
 	testDir: './e2e',
@@ -16,7 +17,7 @@ module.exports = defineConfig( {
 	use: {
 		baseURL: `http://127.0.0.1:${ WP_PORT }`,
 		viewport: { width: 1280, height: 800 },
-		trace: 'retain-on-failure',
+		trace: process.env.CI ? 'retain-on-failure' : 'off',
 		screenshot: 'only-on-failure',
 	},
 	outputDir: './e2e/.results',

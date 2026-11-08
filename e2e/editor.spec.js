@@ -4,6 +4,7 @@ const {
 	createPost,
 	deleteAllPosts,
 	configureEndpoint,
+	primeEditorPreferences,
 	prepareEditor,
 	openFindableSidebar,
 } = require( './helpers' );
@@ -16,6 +17,7 @@ test.describe( 'Block editor score panel', () => {
 		await configureEndpoint( page );
 		await deleteAllPosts( page );
 		post = await createPost( page, 'How to brew espresso at home' );
+		await primeEditorPreferences( page );
 		await page.close();
 	} );
 

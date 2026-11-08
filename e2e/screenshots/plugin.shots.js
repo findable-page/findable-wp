@@ -11,6 +11,7 @@ const {
 	createPost,
 	deleteAllPosts,
 	configureEndpoint,
+	primeEditorPreferences,
 	prepareEditor,
 	openFindableSidebar,
 } = require( '../helpers' );
@@ -49,6 +50,7 @@ test.describe( 'Screenshots', () => {
 		await configureEndpoint( page );
 		await deleteAllPosts( page );
 		await rest( page, 'DELETE', '/findable/v1/bulk' );
+		await primeEditorPreferences( page );
 		posts = [];
 		for ( const title of TITLES ) {
 			posts.push( await createPost( page, title ) );

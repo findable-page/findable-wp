@@ -1,4 +1,23 @@
-const API = 'http://127.0.0.1:9501';
+const API = `http://127.0.0.1:${ process.env.E2E_API_PORT || 9501 }`;
+
+/**
+ * Ensure the browser context is logged into WordPress admin.
+ * @param {import('@playwright/test').Page} page Logged-in page.
+ * @param {string}                          [username] Username.
+ * @param {string}                          [password] Password.
+ */
+async function login( page, username = 'admin', password = 'password' ) {
+	await page.goto( '/' );
+	if ( page.url().includes( 'wp-login.php' ) ) {
+		const loginInput = page.locator( '#user_login' );
+		if ( await loginInput.isVisible() ) {
+			await loginInput.fill( username );
+			await page.fill( '#user_pass', password );
+			await page.click( '#wp-submit' );
+			await page.waitForURL( /wp-admin/ );
+		}
+	}
+}
 
 /**
  * Run fn in the page with a REST nonce and a `rest(path, opts)` helper.
@@ -9,12 +28,20 @@ const API = 'http://127.0.0.1:9501';
  */
 async function rest( page, method, route, data ) {
 	await page.goto( '/wp-admin/admin.php?page=findable-dashboard' );
+	if ( page.url().includes( 'wp-login.php' ) ) {
+		await login( page );
+		await page.goto( '/wp-admin/admin.php?page=findable-dashboard' );
+	}
 	return page.evaluate(
 		async ( [ m, r, d ] ) => {
-			const nonce = await (
-				await fetch( '/wp-admin/admin-ajax.php?action=rest-nonce' )
-			).text();
-			const res = await fetch( '/?rest_route=' + r, {
+			const nonce =
+				window.findableAdmin?.restNonce ||
+				( window.wpApiSettings ? window.wpApiSettings.nonce : '' );
+			const path = r.startsWith( '/' ) ? r : '/' + r;
+			const url = path.startsWith( '/?' )
+				? path
+				: '/?rest_route=' + path.replace( '?', '&' );
+			const res = await fetch( url, {
 				method: m,
 				headers: {
 					'X-WP-Nonce': nonce,
@@ -22,7 +49,11 @@ async function rest( page, method, route, data ) {
 				},
 				body: d ? JSON.stringify( d ) : undefined,
 			} );
-			return { status: res.status, body: await res.json() };
+			let body = {};
+			try {
+				body = await res.json();
+			} catch ( e ) {}
+			return { status: res.status, body };
 		},
 		[ method, route, data ]
 	);
@@ -44,14 +75,16 @@ async function deleteAllPosts( page ) {
 		const { body } = await rest(
 			page,
 			'GET',
-			`/wp/v2/${ type }&per_page=100&status=any`
+			`/wp/v2/${ type }?per_page=100&status=any`
 		);
-		for ( const item of body ) {
-			await rest(
-				page,
-				'DELETE',
-				`/wp/v2/${ type }/${ item.id }&force=true`
-			);
+		if ( Array.isArray( body ) ) {
+			for ( const item of body ) {
+				await rest(
+					page,
+					'DELETE',
+					`/wp/v2/${ type }/${ item.id }?force=true`
+				);
+			}
 		}
 	}
 }
@@ -69,6 +102,7 @@ async function mock( request, path, data ) {
  * @param {import('@playwright/test').Page} page Logged-in page.
  */
 async function configureEndpoint( page ) {
+	await login( page );
 	await page.goto( '/wp-admin/admin.php?page=findable-settings' );
 	await page.fill( '#findable-endpoint', API );
 	await page.click( '#submit' );
@@ -85,61 +119,65 @@ async function runCron( page ) {
 	await page.request.get( '/wp-cron.php?doing_wp_cron' );
 }
 
+/**
+ * Persist editor preferences server-side so the editor boots without the
+ * welcome guide and with the Findable sidebar open. Writing them from inside a
+ * loaded editor races its own boot (guide re-opens, sidebar state flips).
+ *
+ * @param {import('@playwright/test').Page} page Logged-in page.
+ */
+async function primeEditorPreferences( page ) {
+	await rest( page, 'POST', '/wp/v2/users/me', {
+		meta: {
+			persisted_preferences: {
+				'core/edit-post': {
+					welcomeGuide: false,
+					fullscreenMode: false,
+				},
+				core: {
+					distractionFree: false,
+					isComplementaryAreaVisible: true,
+				},
+				'core/interface': {
+					complementaryArea: {
+						'core/edit-post': 'findable/findable-sidebar',
+					},
+				},
+				_modified: new Date().toISOString(),
+			},
+		},
+	} );
+}
+
 async function prepareEditor( page ) {
 	await page.waitForSelector(
 		'.editor-visual-editor, .edit-post-visual-editor',
 		{ timeout: 60_000 }
 	);
-	await page.evaluate( () => {
-		const { dispatch } = window.wp.data;
-		dispatch( 'core/preferences' ).set(
-			'core/edit-post',
-			'welcomeGuide',
-			false
-		);
-		dispatch( 'core/preferences' ).set(
-			'core/edit-post',
-			'fullscreenMode',
-			false
-		);
-		dispatch( 'core/preferences' ).set( 'core', 'distractionFree', false );
-	} );
-	// On a fresh site the guide can render after the preference write; close it whenever it shows up.
-	const guide = page.getByRole( 'dialog', { name: /Welcome to the editor/ } );
-	await page.addLocatorHandler( guide, async () => {
-		await guide.getByRole( 'button', { name: 'Close' } ).click();
-	} );
 }
 
 async function openFindableSidebar( page ) {
 	const body = page.locator( '.findable-sidebar-body' );
-	// The editor remembers the open sidebar; clicking the toggle again would close it.
-	if ( await body.isVisible() ) {
-		return;
+	if ( ! ( await body.isVisible() ) ) {
+		await page.evaluate( () =>
+			window.wp.data
+				.dispatch( 'core/edit-post' )
+				.openGeneralSidebar( 'findable/findable-sidebar' )
+		);
 	}
-	const toggle = page.getByRole( 'button', {
-		name: 'Findable',
-		exact: true,
-	} );
-	if ( await toggle.count() ) {
-		await toggle.first().click();
-	} else {
-		await page.getByRole( 'button', { name: 'Options' } ).first().click();
-		await page
-			.getByRole( 'menuitemcheckbox', { name: /Findable/ } )
-			.click();
-	}
-	await page.locator( '.findable-sidebar-body' ).waitFor();
+	await body.waitFor();
 }
 
 module.exports = {
 	API,
+	login,
 	rest,
 	createPost,
 	deleteAllPosts,
 	mock,
 	configureEndpoint,
 	runCron,
+	primeEditorPreferences,
 	prepareEditor,
 	openFindableSidebar,
 };
