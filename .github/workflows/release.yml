@@ -42,7 +42,7 @@ jobs:
       - name: Build zip
         run: |
           mkdir -p dist
-          zip -r dist/findable.zip . -x '*.git*' 'node_modules/*' 'vendor/*' 'tests/*' '.github/*' '.wordpress-org/*' 'openspec/*' 'bin/*' '*.map' '*.zip' 'dist/*' '.pi/*' 'phpcs.xml.dist' 'phpunit.xml.dist' 'composer.json' 'composer.lock' 'package-lock.json' '.eslintrc.json' '.editorconfig' '.distignore' '.wp-env.json' '.gitignore' > /dev/null
+          zip -r dist/findable.zip . -x '*.git*' 'node_modules/*' 'vendor/*' 'tests/*' 'e2e/*' 'docs/*' 'coverage/*' 'playwright*.config.js' 'phpunit-constants.xml.dist' '.github/*' '.wordpress-org/*' 'openspec/*' 'bin/*' '*.map' '*.zip' 'dist/*' '.pi/*' 'phpcs.xml.dist' 'phpunit.xml.dist' 'composer.json' 'composer.lock' 'package-lock.json' '.eslintrc.json' '.editorconfig' '.distignore' '.wp-env.json' '.gitignore' > /dev/null
           unzip -l dist/findable.zip | grep -q 'build/index.js' || { echo "zip missing build/index.js"; exit 1; }
           unzip -l dist/findable.zip | grep -q 'build/index.asset.php' || { echo "zip missing build/index.asset.php"; exit 1; }
           unzip -l dist/findable.zip | grep -q 'src/editor/index.js' || { echo "zip missing src/ sources"; exit 1; }

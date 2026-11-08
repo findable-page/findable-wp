@@ -9,3 +9,5 @@ build/
 composer.phar
 .wp-env
 coverage/
+e2e/.results/
+playwright-report/

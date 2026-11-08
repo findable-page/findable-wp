@@ -41,6 +41,11 @@ jobs:
       matrix:
         php: ['7.4', '8.1', '8.3', 'latest']
         wp: ['6.5', 'latest']
+        include:
+          # Annotates the existing 8.3/latest row: it also measures coverage and enforces the threshold.
+          - php: '8.3'
+            wp: 'latest'
+            coverage: true
         exclude:
           - php: '7.4'
             wp: 'latest' # Latest WP no longer supports PHP 7.4.
@@ -63,7 +68,9 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           extensions: mysql
-          coverage: none
+          coverage: ${{ matrix.coverage && 'pcov' || 'none' }}
+          # pcov guesses src/ (the JS sources) as its root when that dir exists; point it at the plugin root.
+          ini-values: pcov.directory=.
           tools: composer:v2
 
       - name: Install PHP dependencies
@@ -73,9 +80,36 @@ jobs:
         run: bash bin/install-wp-tests.sh wordpress_test root root 127.0.0.1:3306 ${{ matrix.wp }} true
 
       - name: Run tests
-        run: composer test
+        if: ${{ !matrix.coverage }}
+        run: |
+          vendor/bin/phpunit
+          vendor/bin/phpunit -c phpunit-constants.xml.dist
+          WP_MULTISITE=1 vendor/bin/phpunit
         env:
           WP_TESTS_DIR: /tmp/wordpress-tests-lib
+
+      - name: Run tests with coverage
+        if: ${{ matrix.coverage }}
+        run: |
+          F="--coverage-filter includes --coverage-filter uninstall.php"
+          vendor/bin/phpunit --coverage-clover coverage/clover.xml --coverage-html coverage/html $F --coverage-text
+          vendor/bin/phpunit -c phpunit-constants.xml.dist --coverage-clover coverage/clover-constants.xml $F
+          WP_MULTISITE=1 vendor/bin/phpunit --coverage-clover coverage/clover-ms.xml $F
+        env:
+          WP_TESTS_DIR: /tmp/wordpress-tests-lib
+
+      - name: Enforce coverage threshold (>= 95% lines)
+        if: ${{ matrix.coverage }}
+        shell: bash # -eo pipefail, so tee keeps the threshold exit code.
+        run: php bin/check-coverage.php coverage/clover.xml,coverage/clover-constants.xml,coverage/clover-ms.xml 95 --missing | tee coverage/summary.txt
+
+      - name: Upload coverage report
+        if: ${{ matrix.coverage }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: php-coverage
+          path: coverage/
+          retention-days: 7
 
   js:
     name: JS lint, test, build
@@ -96,8 +130,8 @@ jobs:
       - name: Lint JS
         run: npm run lint:js
 
-      - name: Unit tests
-        run: npm run test:unit
+      - name: Unit tests with coverage
+        run: npm run test:unit:coverage
 
       - name: Build
         run: npm run build
@@ -181,6 +215,41 @@ jobs:
           for f in includes/*.php data/*.php uninstall.php; do
             grep -q "ABSPATH\|WP_UNINSTALL_PLUGIN" "$f" || { echo "::error::$f lacks an ABSPATH/WP_UNINSTALL_PLUGIN guard"; exit 1; }
           done
+
+  e2e:
+    name: E2E (Playwright + WordPress Playground)
+    runs-on: ubuntu-latest
+    needs: [js]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build editor assets
+        run: npm run build
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run e2e tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: e2e/.results/
+          retention-days: 7
+          if-no-files-found: ignore
 
   plugin-check:
     name: Plugin Check

@@ -8,14 +8,19 @@
 	"scripts": {
 		"build": "wp-scripts build src/editor/index.js --output-path=build",
 		"start": "wp-scripts start src/editor/index.js --output-path=build",
-		"lint:js": "wp-scripts lint-js src assets",
+		"lint:js": "wp-scripts lint-js src assets e2e *.config.js",
 		"lint:css": "stylelint assets/**/*.css",
 		"lint:pkg-json": "wp-scripts lint-pkg-json",
 		"test:unit": "wp-scripts test-unit-js",
+		"test:unit:coverage": "wp-scripts test-unit-js --coverage",
+		"test:e2e": "playwright test",
+		"screenshots": "playwright test --config=playwright.screenshots.config.js",
 		"make-pot": "wp i18n make-pot . languages/findable.pot --exclude=vendor,node_modules,build,tests,bin,.github,.wordpress-org"
 	},
 	"devDependencies": {
+		"@playwright/test": "^1.65.0",
 		"@wordpress/scripts": "^30.0.0",
+		"@wp-playground/cli": "^3.1.62",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
 		"typescript": "~5.8.3"
