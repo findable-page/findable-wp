@@ -200,7 +200,8 @@ jobs:
       - name: Build zip
         run: |
           mkdir -p /tmp/dist
-          zip -r /tmp/dist/findable.zip . -x '*.git*' 'node_modules/*' 'vendor/*' 'tests/*' '.github/*' '.wordpress-org/*' 'openspec/*' 'bin/*' '*.map' '*.zip' 'dist/*' '.pi/*' > /dev/null
+          # Same excludes as release.yml, so Plugin Check sees what actually ships.
+          zip -r /tmp/dist/findable.zip . -x '*.git*' 'node_modules/*' 'vendor/*' 'tests/*' '.github/*' '.wordpress-org/*' 'openspec/*' 'bin/*' '*.map' '*.zip' 'dist/*' '.pi/*' 'phpcs.xml.dist' 'phpunit.xml.dist' 'composer.json' 'composer.lock' 'package-lock.json' '.eslintrc.json' '.stylelintrc.json' '.editorconfig' '.distignore' '.wp-env.json' '.gitignore' > /dev/null
           # Plugin Check takes the plugin slug from the folder name, so unpack into findable/.
           unzip -q /tmp/dist/findable.zip -d /tmp/dist/findable
 
