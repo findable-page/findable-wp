@@ -407,7 +407,7 @@ class Store {
 					'id'      => (int) $post_id,
 					'score'   => $overall,
 					'at'      => isset( $result['scanned_at'] ) ? (int) $result['scanned_at'] : 0,
-					'failing' => empty( $result['failing'] ) ? Result::failing( $result ) : (int) $result['failing'],
+					'failing' => isset( $result['failing'] ) && is_numeric( $result['failing'] ) ? (int) $result['failing'] : count( Result::failing( $result ) ),
 				);
 
 				foreach ( Result::failing( $result ) as $check ) {

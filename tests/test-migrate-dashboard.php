@@ -177,6 +177,58 @@ class Test_Dashboard_Aggregate extends Findable_TestCase {
 		$this->assertSame( $b, $agg['weakest'][1]['id'] );
 	}
 
+	public function test_weakest_failing_count_is_int_when_post_has_no_failing_checks() {
+		$perfect = $this->create_scannable_post();
+		$result  = Result::normalize(
+			$this->scan_response(
+				array(
+					'overall' => 100,
+					'seo'     => array(
+						'score'  => 100,
+						'checks' => array(
+							array(
+								'id'    => 'title_exists',
+								'label' => 'Title',
+								'pass'  => true,
+							),
+						),
+					),
+					'aeo'     => array(
+						'score'  => 100,
+						'checks' => array(),
+					),
+					'geo'     => array(
+						'score'  => 100,
+						'checks' => array(),
+					),
+				)
+			)
+		);
+		Store::save( $perfect, $result );
+
+		$agg = Store::aggregate( true );
+
+		$this->assertSame( 0, $agg['weakest'][0]['failing'] );
+	}
+
+	public function test_dashboard_renders_when_result_has_no_stored_failing_count() {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+		$post_id = $this->create_scannable_post();
+		$result  = $this->save_result( $post_id, 95 );
+		// Legacy-shaped row: no stored failing count.
+		unset( $result['failing'] );
+		update_post_meta( $post_id, '_findable_result', $result );
+
+		ob_start();
+		\Findable\Admin::render_dashboard();
+		$html = ob_get_clean();
+
+		$this->assertStringContainsString( 'Weakest posts', $html );
+		$agg = Store::aggregate( true );
+		$this->assertSame( 3, $agg['weakest'][0]['failing'] );
+	}
+
 	public function test_common_failing_checks_ranked() {
 		$a = $this->create_scannable_post();
 		$b = $this->create_scannable_post();
