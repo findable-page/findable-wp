@@ -432,7 +432,8 @@ class Admin {
 
 		$handler = static function ( $orderby_sql ) use ( $order, &$handler ) {
 			remove_filter( 'posts_orderby', $handler );
-			return 'ISNULL( mt1.meta_value ) ' . $order . ', CAST( mt1.meta_value AS SIGNED ) ' . $order;
+			// ISNULL is 1 for unscanned posts, so ASC keeps them last whichever way the scores sort.
+			return 'ISNULL( mt1.meta_value ) ASC, CAST( mt1.meta_value AS SIGNED ) ' . $order;
 		};
 		add_filter( 'posts_orderby', $handler );
 	}
