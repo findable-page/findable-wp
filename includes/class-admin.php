@@ -432,7 +432,8 @@ class Admin {
 
 		$handler = static function ( $orderby_sql ) use ( $order, &$handler ) {
 			remove_filter( 'posts_orderby', $handler );
-			return 'ISNULL( mt1.meta_value ) ' . $order . ', CAST( mt1.meta_value AS SIGNED ) ' . $order;
+			// ISNULL is 1 for unscanned posts, so ASC keeps them last whichever way the scores sort.
+			return 'ISNULL( mt1.meta_value ) ASC, CAST( mt1.meta_value AS SIGNED ) ' . $order;
 		};
 		add_filter( 'posts_orderby', $handler );
 	}
@@ -552,6 +553,7 @@ class Admin {
 				'<td class="findable-band-%1$s"><span class="findable-band-bar" aria-hidden="true" style="width:%2$s%%"></span><span>%3$s</span></td>',
 				esc_attr( $key ),
 				esc_attr( $agg['scanned'] ? (int) round( 100 * $agg['bands'][ $key ] / $agg['scanned'] ) : 0 ),
+				/* translators: %s: number of posts. */
 				esc_html( _n( '%s post', '%s posts', $agg['bands'][ $key ], 'findable' ) )
 			);
 		}
@@ -597,6 +599,7 @@ class Admin {
 				'<td><a href="%1$s">%2$s</a> <span class="findable-pct">%3$s</span></td>',
 				esc_url( $filter ),
 				esc_html( number_format_i18n( $row['posts'] ) ),
+				/* translators: %s: percentage of scanned posts. */
 				esc_html( sprintf( __( '%s%% of scanned posts', 'findable' ), number_format_i18n( $agg['scanned'] ? (int) round( 100 * $row['posts'] / $agg['scanned'] ) : 0 ) ) )
 			);
 			printf( '<td>%s</td>', esc_html( Fix_Advice::for_check( $row['id'], $locale ) ) );

@@ -19,14 +19,14 @@ class Store {
 	 */
 	public static function register_meta() {
 		$args_map = array(
-			'_findable_result' => array( 'type' => 'array' ),
-			'_findable_overall' => array( 'type' => 'integer' ),
-			'_findable_scanned_at' => array( 'type' => 'integer' ),
+			'_findable_result'      => array( 'type' => 'array' ),
+			'_findable_overall'     => array( 'type' => 'integer' ),
+			'_findable_scanned_at'  => array( 'type' => 'integer' ),
 			'_findable_keyphrase'   => array(
 				'type'    => 'string',
 				'default' => '',
 			),
-			'_findable_error' => array( 'type' => 'array' ),
+			'_findable_error'       => array( 'type' => 'array' ),
 			'_findable_failing_ids' => array(
 				'type'    => 'string',
 				'default' => '',
@@ -370,14 +370,13 @@ class Store {
 		while ( true ) {
 			$batch = get_posts(
 				array(
-					'post_type'        => $types,
-					'post_status'      => 'any',
-					'posts_per_page'   => $per_page,
-					'offset'           => $offset,
-					'fields'           => 'ids',
-					'meta_key'         => '_findable_result', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-					'suppress_filters' => true,
-					'orderby'          => 'none',
+					'post_type'      => $types,
+					'post_status'    => 'any',
+					'posts_per_page' => $per_page,
+					'offset'         => $offset,
+					'fields'         => 'ids',
+					'meta_key'       => '_findable_result', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+					'orderby'        => 'none',
 				)
 			);
 			if ( empty( $batch ) ) {
@@ -407,7 +406,7 @@ class Store {
 					'id'      => (int) $post_id,
 					'score'   => $overall,
 					'at'      => isset( $result['scanned_at'] ) ? (int) $result['scanned_at'] : 0,
-					'failing' => empty( $result['failing'] ) ? Result::failing( $result ) : (int) $result['failing'],
+					'failing' => isset( $result['failing'] ) && is_numeric( $result['failing'] ) ? (int) $result['failing'] : count( Result::failing( $result ) ),
 				);
 
 				foreach ( Result::failing( $result ) as $check ) {

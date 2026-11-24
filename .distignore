@@ -18,6 +18,7 @@
 /.distignore
 /.editorconfig
 /.eslintrc.json
+/.stylelintrc.json
 /.gitignore
 /openspec
 /package-lock.json

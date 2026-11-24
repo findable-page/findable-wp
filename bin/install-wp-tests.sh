@@ -28,19 +28,17 @@ download() {
 	fi
 }
 
-if [[ "$WP_VERSION" =~ ^[0-9]+\.[0-9]+$ ]]; then
-	WP_TESTS_TAG="branches/$WP_VERSION"
-elif [[ "$WP_VERSION" =~ [0-9]+\.[0-9]+\.[0-9]+ ]]; then
-	WP_TESTS_TAG="tags/$WP_VERSION"
-elif [[ "$WP_VERSION" == 'trunk' ]]; then
-	WP_TESTS_TAG='trunk'
-else
-	# Latest stable.
+if [[ "$WP_VERSION" == 'latest' ]]; then
 	download "https://api.wordpress.org/core/version-check/1.7/" /tmp/wp-latest.json
-	grep '[0-9]+\.[0-9]+\.[0-9]+' /tmp/wp-latest.json
-	WP_VERSION=$(grep -o '"version":"[0-9]*\.[0-9]*\.[0-9]*"' /tmp/wp-latest.json | head -1 | sed 's/"version":"//;s/"//')
-	WP_TESTS_TAG="tags/$WP_VERSION"
+	WP_VERSION=$(grep -o '"version":"[0-9][0-9.]*"' /tmp/wp-latest.json | head -1 | sed 's/"version":"//;s/"//')
+	if [ -z "$WP_VERSION" ]; then
+		echo "Could not determine the latest WordPress version."
+		exit 1
+	fi
 fi
+
+# wordpress-develop git ref holding tests/phpunit: trunk, an x.y branch or an x.y.z tag.
+WP_TESTS_REF="$WP_VERSION"
 
 set -ex
 
@@ -50,7 +48,9 @@ install_wp() {
 	fi
 	mkdir -p "$WP_CORE_DIR"
 	if [ "$WP_VERSION" = 'trunk' ]; then
-		svn export --quiet "https://develop.svn.wordpress.org/trunk/src/" "$WP_CORE_DIR"
+		download "https://wordpress.org/nightly-builds/wordpress-latest.zip" /tmp/wordpress-nightly.zip
+		unzip -q /tmp/wordpress-nightly.zip -d /tmp/wordpress-nightly
+		mv /tmp/wordpress-nightly/wordpress/* "$WP_CORE_DIR"
 	else
 		download "https://wordpress.org/wordpress-$WP_VERSION.tar.gz" /tmp/wordpress.tar.gz
 		tar --strip-components=1 -zxmf /tmp/wordpress.tar.gz -C "$WP_CORE_DIR"
@@ -58,12 +58,28 @@ install_wp() {
 }
 
 install_test_suite() {
-	if [ -f "$WP_TESTS_DIR/includes/bootstrap.php" ]; then
-		return
+	if [ ! -f "$WP_TESTS_DIR/includes/bootstrap.php" ]; then
+		# GitHub runners no longer ship svn; take tests/phpunit from the git mirror.
+		local checkout
+		checkout="$(mktemp -d)"
+		git clone --quiet --depth 1 --branch "$WP_TESTS_REF" --filter=blob:none --sparse \
+			https://github.com/WordPress/wordpress-develop.git "$checkout"
+		git -C "$checkout" sparse-checkout set tests/phpunit/includes tests/phpunit/data
+		mkdir -p "$WP_TESTS_DIR"
+		cp -R "$checkout/tests/phpunit/includes" "$checkout/tests/phpunit/data" "$WP_TESTS_DIR/"
+		cp "$checkout/wp-tests-config-sample.php" "$WP_TESTS_DIR/wp-tests-config-sample.php"
+		rm -rf "$checkout"
 	fi
-	mkdir -p "$WP_TESTS_DIR"
-	svn export --quiet "https://develop.svn.wordpress.org/$WP_TESTS_TAG/tests/phpunit/includes/" "$WP_TESTS_DIR/includes"
-	svn export --quiet "https://develop.svn.wordpress.org/$WP_TESTS_TAG/tests/phpunit/data/" "$WP_TESTS_DIR/data"
+
+	if [ ! -f "$WP_TESTS_DIR/wp-tests-config.php" ]; then
+		sed -e "s:dirname( __FILE__ ) . '/src/':'$WP_CORE_DIR/':" \
+			-e "s:__DIR__ . '/src/':'$WP_CORE_DIR/':" \
+			-e "s/youremptytestdbnamehere/$DB_NAME/" \
+			-e "s/yourusernamehere/$DB_USER/" \
+			-e "s/yourpasswordhere/$DB_PASS/" \
+			-e "s|localhost|${DB_HOST}|" \
+			"$WP_TESTS_DIR/wp-tests-config-sample.php" > "$WP_TESTS_DIR/wp-tests-config.php"
+	fi
 }
 
 install_db() {
